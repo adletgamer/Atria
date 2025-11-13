@@ -1,12 +1,27 @@
 import { Link, useLocation } from "react-router-dom";
-import { Leaf, Menu, X } from "lucide-react";
+import { Leaf, Menu, X, Wallet, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import logo from "@/assets/logo.png";
+import { useMetaMask } from "@/hooks/useMetaMask";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { 
+    account, 
+    isConnected, 
+    isLoading, 
+    connectWallet, 
+    disconnectWallet, 
+    formatAddress 
+  } = useMetaMask();
 
   const navItems = [
     { path: "/", label: "Inicio" },
@@ -16,6 +31,14 @@ const Navbar = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleConnectWallet = async () => {
+    await connectWallet();
+  };
+
+  const handleDisconnectWallet = () => {
+    disconnectWallet();
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -44,10 +67,52 @@ const Navbar = () => {
                 {item.label}
               </Link>
             ))}
-            <Button size="sm" className="bg-gradient-primary hover:opacity-90">
-              <Leaf className="mr-2 h-4 w-4" />
-              Conectar Wallet
-            </Button>
+            
+            {/* Wallet Connection Button */}
+            {!isConnected ? (
+              <Button 
+                size="sm" 
+                className="bg-gradient-primary hover:opacity-90"
+                onClick={handleConnectWallet}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                    Conectando...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Conectar Wallet
+                  </>
+                )}
+              </Button>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-green-200 bg-green-50 hover:bg-green-100"
+                  >
+                    <Wallet className="mr-2 h-4 w-4 text-green-600" />
+                    <span className="text-green-700 font-mono text-xs">
+                      {formatAddress(account)}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    className="text-red-600 cursor-pointer"
+                    onClick={handleDisconnectWallet}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Desconectar Wallet
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -77,11 +142,47 @@ const Navbar = () => {
                 {item.label}
               </Link>
             ))}
+            
+            {/* Mobile Wallet Connection */}
             <div className="px-4">
-              <Button size="sm" className="w-full bg-gradient-primary hover:opacity-90">
-                <Leaf className="mr-2 h-4 w-4" />
-                Conectar Wallet
-              </Button>
+              {!isConnected ? (
+                <Button 
+                  size="sm" 
+                  className="w-full bg-gradient-primary hover:opacity-90"
+                  onClick={handleConnectWallet}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                      Conectando...
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="mr-2 h-4 w-4" />
+                      Conectar Wallet
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-center">
+                    <p className="text-green-600 text-sm font-medium">✅ Conectado</p>
+                    <p className="text-green-700 font-mono text-xs mt-1">
+                      {formatAddress(account)}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-red-600 border-red-200"
+                    onClick={handleDisconnectWallet}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Desconectar
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
