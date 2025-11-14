@@ -2,7 +2,7 @@ import Navbar from "@/components/Navbar";
 import StatsCard from "@/components/StatsCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, TrendingUp, Users, MapPin, Calendar, ArrowUpRight, Eye } from "lucide-react";
+import { Package, TrendingUp, Users, MapPin, Calendar, ArrowUpRight, Eye, Zap, Shield, Cpu, BarChart3, Database } from "lucide-react";
 import peruMap from "@/assets/peru-map.png";
 import { useMetaMask } from "@/hooks/useMetaMask";
 import { useEffect, useState } from "react";
@@ -33,7 +33,7 @@ const Dashboard = () => {
   useEffect(() => {
     const cargarDatos = () => {
       const lotesGuardados = JSON.parse(localStorage.getItem("lotes") || "[]");
-      setLotes(lotesGuardados.slice(0, 4)); // Últimos 4 lotes
+      setLotes(lotesGuardados.slice(-4).reverse()); // Últimos 4 lotes, más recientes primero
 
       // Calcular estadísticas reales
       const productoresUnicos = new Set(lotesGuardados.map((lote: Lote) => lote.productor));
@@ -58,43 +58,51 @@ const Dashboard = () => {
 
   const statsData = [
     {
-      title: "Lotes Registrados",
+      title: "Registered Batches",
       value: stats.totalLotes.toString(),
-      description: "Total de lotes en blockchain",
+      description: "Total batches on blockchain",
       icon: Package,
       trend: { value: "+12%", isPositive: true },
-      color: "bg-blue-50 text-blue-700 border-blue-200"
+      color: "from-blue-500 to-cyan-500",
+      bgColor: "bg-gradient-to-br from-blue-50 to-cyan-50",
+      borderColor: "border-blue-200"
     },
     {
-      title: "Productores Activos",
+      title: "Active Producers",
       value: stats.productoresActivos.toString(),
-      description: "Agricultores verificados",
+      description: "Verified farmers",
       icon: Users,
       trend: { value: "+8%", isPositive: true },
-      color: "bg-green-50 text-green-700 border-green-200"
+      color: "from-green-500 to-emerald-500",
+      bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
+      borderColor: "border-green-200"
     },
     {
-      title: "Transacciones",
+      title: "Transactions",
       value: stats.transacciones.toString(),
-      description: "En Polygon Amoy este mes",
+      description: "On Polygon Amoy this month",
       icon: TrendingUp,
       trend: { value: "+23%", isPositive: true },
-      color: "bg-purple-50 text-purple-700 border-purple-200"
+      color: "from-purple-500 to-pink-500",
+      bgColor: "bg-gradient-to-br from-purple-50 to-pink-50",
+      borderColor: "border-purple-200"
     },
     {
-      title: "Ubicaciones",
+      title: "Locations",
       value: stats.ubicaciones.toString(),
-      description: "Regiones activas",
+      description: "Active regions",
       icon: MapPin,
-      color: "bg-orange-50 text-orange-700 border-orange-200"
+      color: "from-orange-500 to-amber-500",
+      bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
+      borderColor: "border-orange-200"
     },
   ];
 
   const distributionData = [
-    { label: "Premium", percentage: 45, color: "bg-gradient-to-r from-green-500 to-emerald-600" },
-    { label: "Exportación", percentage: 35, color: "bg-gradient-to-r from-blue-500 to-cyan-600" },
-    { label: "Primera", percentage: 15, color: "bg-gradient-to-r from-yellow-500 to-amber-600" },
-    { label: "Segunda", percentage: 5, color: "bg-gradient-to-r from-gray-500 to-gray-600" },
+    { label: "Premium", percentage: 45, color: "from-green-500 to-emerald-600" },
+    { label: "Export", percentage: 35, color: "from-blue-500 to-cyan-600" },
+    { label: "First Grade", percentage: 15, color: "from-yellow-500 to-amber-600" },
+    { label: "Second Grade", percentage: 5, color: "from-slate-500 to-slate-600" },
   ];
 
   const handleViewLote = (loteId: string) => {
@@ -106,80 +114,104 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/20">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-12">
-        {/* Header con Wallet Info */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Dashboard MangoChain</h1>
-            <p className="text-muted-foreground">
-              Monitoreo en tiempo real de la cadena de suministro en Polygon Amoy
-            </p>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header with Wallet Info */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center shadow-xl">
+              <BarChart3 className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+                MangoChain Dashboard
+              </h1>
+              <p className="text-slate-600 text-lg mt-2">
+                Real-time supply chain monitoring on Polygon Amoy
+              </p>
+            </div>
           </div>
           
           {isConnected && (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 min-w-[280px]">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-green-800">Wallet Conectada</span>
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-2xl p-6 min-w-[320px] shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-lg font-bold text-emerald-800 flex items-center gap-2">
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
+                  Wallet Connected
+                </span>
+                <Shield className="h-5 w-5 text-emerald-600" />
               </div>
-              <p className="text-xs font-mono text-green-700 mb-1">{formatAddress(account)}</p>
-              <p className="text-xs text-green-600">Polygon Amoy Testnet ✅</p>
+              <p className="text-sm font-mono text-emerald-700 mb-2 bg-white/50 p-2 rounded-lg border border-emerald-200">
+                {formatAddress(account)}
+              </p>
+              <p className="text-sm text-emerald-600 font-semibold">Polygon Amoy Testnet ✅</p>
             </div>
           )}
         </div>
 
         {/* Quick Actions */}
         {isConnected && (
-          <div className="flex gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <Button 
               onClick={handleRegisterNew}
-              className="bg-gradient-primary hover:opacity-90"
+              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-8 py-3 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 text-lg"
+              size="lg"
             >
-              <Package className="mr-2 h-4 w-4" />
-              Registrar Nuevo Lote
+              <Package className="mr-3 h-5 w-5" />
+              Register New Batch
             </Button>
             <Button 
               variant="outline"
               onClick={() => navigate("/rastrear")}
+              className="border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 font-bold px-8 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg"
+              size="lg"
             >
-              <Eye className="mr-2 h-4 w-4" />
-              Rastrear Lotes
+              <Eye className="mr-3 h-5 w-5" />
+              Track Batches
             </Button>
           </div>
         )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statsData.map((stat) => (
-            <StatsCard key={stat.title} {...stat} />
+          {statsData.map((stat, index) => (
+            <div 
+              key={stat.title}
+              className="transform hover:-translate-y-2 transition-all duration-300"
+            >
+              <StatsCard {...stat} />
+            </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Map Section */}
-          <Card className="lg:col-span-2 shadow-soft border-0 bg-gradient-to-br from-white to-blue-50/50">
-            <CardHeader className="pb-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-blue-600" />
-                    Mapa de Producción
-                  </CardTitle>
-                  <CardDescription>
-                    Principales regiones productoras de mango en Perú
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Alta Producción</span>
+          <Card className="lg:col-span-2 border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
+            <CardHeader className="pb-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <MapPin className="h-6 w-6 text-white" />
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <span>Media Producción</span>
+                  <div>
+                    <CardTitle className="text-2xl font-bold text-slate-900">
+                      Production Map
+                    </CardTitle>
+                    <CardDescription className="text-slate-600 text-lg">
+                      Main mango producing regions in Peru
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="flex gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></div>
+                    <span className="text-slate-700 font-medium">High Production</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full shadow-sm"></div>
+                    <span className="text-slate-700 font-medium">Medium Production</span>
                   </div>
                 </div>
               </div>
@@ -187,36 +219,42 @@ const Dashboard = () => {
             <CardContent className="flex flex-col items-center">
               <img 
                 src={peruMap} 
-                alt="Mapa del Perú" 
-                className="max-h-[300px] object-contain mb-4"
+                alt="Peru Map" 
+                className="max-h-[280px] object-contain mb-6 shadow-lg rounded-2xl border border-slate-200"
               />
               <div className="grid grid-cols-3 gap-4 w-full max-w-md">
-                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                  <p className="font-semibold text-green-800">Piura</p>
-                  <p className="text-sm text-green-600">68% de producción</p>
+                <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200 shadow-lg">
+                  <p className="font-bold text-green-800 text-lg">Piura</p>
+                  <p className="text-green-600 text-sm font-medium">68% of production</p>
                 </div>
-                <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <p className="font-semibold text-yellow-800">Lambayeque</p>
-                  <p className="text-sm text-yellow-600">25% de producción</p>
+                <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl border-2 border-yellow-200 shadow-lg">
+                  <p className="font-bold text-yellow-800 text-lg">Lambayeque</p>
+                  <p className="text-yellow-600 text-sm font-medium">25% of production</p>
                 </div>
-                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="font-semibold text-blue-800">Ica</p>
-                  <p className="text-sm text-blue-600">7% de producción</p>
+                <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200 shadow-lg">
+                  <p className="font-bold text-blue-800 text-lg">Ica</p>
+                  <p className="text-blue-600 text-sm font-medium">7% of production</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Recent Activity */}
-          <Card className="shadow-soft border-0 bg-gradient-to-br from-white to-green-50/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-green-600" />
-                Lotes Recientes
-              </CardTitle>
-              <CardDescription>
-                Últimos registros en Polygon Amoy
-              </CardDescription>
+          <Card className="border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
+            <CardHeader className="pb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Calendar className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-bold text-slate-900">
+                    Recent Batches
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 text-lg">
+                    Latest registrations on Polygon Amoy
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {lotes.length > 0 ? (
@@ -224,56 +262,57 @@ const Dashboard = () => {
                   {lotes.map((lote) => (
                     <div
                       key={lote.id}
-                      className="flex flex-col gap-2 p-3 rounded-lg border border-border hover:border-green-300 transition-colors cursor-pointer group"
+                      className="flex flex-col gap-3 p-4 rounded-2xl border-2 border-slate-200 hover:border-green-300 hover:shadow-lg transition-all duration-300 cursor-pointer group bg-white"
                       onClick={() => handleViewLote(lote.id)}
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-semibold text-sm group-hover:text-green-700 transition-colors">
+                          <p className="font-bold text-lg group-hover:text-green-700 transition-colors">
                             {lote.id}
                           </p>
-                          <p className="text-sm text-muted-foreground">{lote.productor}</p>
+                          <p className="text-slate-600 text-sm font-medium">{lote.productor}</p>
                         </div>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          lote.calidad === 'Premium' ? 'bg-green-100 text-green-800' :
-                          lote.calidad === 'Exportación' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <span className={`text-xs px-3 py-1.5 rounded-full font-bold ${
+                          lote.calidad === 'Premium' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' :
+                          lote.calidad === 'Exportación' ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' :
+                          'bg-gradient-to-r from-yellow-500 to-amber-500 text-white'
+                        } shadow-sm`}>
                           {lote.calidad}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
+                        <p className="text-slate-500 text-sm font-medium flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
                           {lote.ubicacion}
                         </p>
-                        <p className="text-xs text-muted-foreground">{lote.fecha}</p>
+                        <p className="text-slate-500 text-sm font-medium">{lote.fecha}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">No hay lotes registrados</p>
+                  <div className="w-16 h-16 mx-auto bg-gradient-to-br from-slate-400 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg mb-4">
+                    <Package className="h-8 w-8 text-white" />
+                  </div>
+                  <p className="text-slate-600 text-lg mb-4 font-medium">No batches registered</p>
                   <Button 
                     onClick={handleRegisterNew}
-                    size="sm"
-                    className="bg-gradient-primary hover:opacity-90"
+                    className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
                   >
-                    Registrar Primer Lote
+                    Register First Batch
                   </Button>
                 </div>
               )}
               
               {lotes.length > 0 && (
                 <Button 
-                  variant="ghost" 
-                  className="w-full mt-4 text-green-600 hover:text-green-700 hover:bg-green-50"
+                  variant="outline" 
+                  className="w-full mt-6 border-2 border-green-200 text-green-700 hover:text-green-800 hover:bg-green-50 font-bold py-3 rounded-full transition-all duration-300"
                   onClick={() => navigate("/rastrear")}
                 >
-                  Ver todos los lotes
-                  <ArrowUpRight className="ml-2 h-4 w-4" />
+                  View All Batches
+                  <ArrowUpRight className="ml-2 h-5 w-5" />
                 </Button>
               )}
             </CardContent>
@@ -281,32 +320,38 @@ const Dashboard = () => {
         </div>
 
         {/* Distribution Chart & Blockchain Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
           {/* Distribution Chart */}
-          <Card className="shadow-soft border-0 bg-gradient-to-br from-white to-purple-50/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-purple-600" />
-                Distribución por Calidad
-              </CardTitle>
-              <CardDescription>
-                Porcentaje de lotes según grado de calidad
-              </CardDescription>
+          <Card className="border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
+            <CardHeader className="pb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <TrendingUp className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-bold text-slate-900">
+                    Quality Distribution
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 text-lg">
+                    Batch percentage by quality grade
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {distributionData.map((item, index) => (
-                  <div key={item.label} className="space-y-2">
+                  <div key={item.label} className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${item.color.replace('bg-gradient-to-r', 'bg')}`}></div>
+                      <span className="text-lg font-bold text-slate-700 flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full bg-gradient-to-r ${item.color} shadow-sm`}></div>
                         {item.label}
                       </span>
-                      <span className="text-sm text-muted-foreground">{item.percentage}%</span>
+                      <span className="text-lg font-bold text-slate-900">{item.percentage}%</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-3">
+                    <div className="w-full bg-slate-100 rounded-full h-4 shadow-inner">
                       <div 
-                        className={`h-3 rounded-full ${item.color} transition-all duration-1000 ease-out`}
+                        className={`h-4 rounded-full bg-gradient-to-r ${item.color} shadow-lg transition-all duration-1000 ease-out`}
                         style={{ width: `${item.percentage}%` }}
                       />
                     </div>
@@ -317,48 +362,66 @@ const Dashboard = () => {
           </Card>
 
           {/* Blockchain Info */}
-          <Card className="shadow-soft border-0 bg-gradient-to-br from-white to-orange-50/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                Estado de la Red
-              </CardTitle>
-              <CardDescription>
-                Información de Polygon Amoy Testnet
-              </CardDescription>
+          <Card className="border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
+            <CardHeader className="pb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-sky-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Cpu className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-bold text-slate-900">
+                    Network Status
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 text-lg">
+                    Polygon Amoy Testnet Information
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200">
-                  <span className="text-sm font-medium text-green-800">Red</span>
-                  <span className="text-sm text-green-700 font-mono">Polygon Amoy</span>
+                <div className="flex justify-between items-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200">
+                  <span className="text-lg font-bold text-green-800 flex items-center gap-2">
+                    <Database className="h-5 w-5" />
+                    Network
+                  </span>
+                  <span className="text-lg text-green-700 font-bold font-mono">Polygon Amoy</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <span className="text-sm font-medium text-blue-800">Chain ID</span>
-                  <span className="text-sm text-blue-700 font-mono">80002</span>
+                <div className="flex justify-between items-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200">
+                  <span className="text-lg font-bold text-blue-800 flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Chain ID
+                  </span>
+                  <span className="text-lg text-blue-700 font-bold font-mono">80002</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <span className="text-sm font-medium text-purple-800">Block Explorer</span>
+                <div className="flex justify-between items-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
+                  <span className="text-lg font-bold text-purple-800 flex items-center gap-2">
+                    <Eye className="h-5 w-5" />
+                    Block Explorer
+                  </span>
                   <a 
                     href="https://amoy.polygonscan.com" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-sm text-purple-700 hover:underline flex items-center gap-1"
+                    className="text-lg text-purple-700 hover:text-purple-800 hover:underline flex items-center gap-2 font-bold transition-all duration-200"
                   >
-                    amoy.polygonscan.com
-                    <ArrowUpRight className="h-3 w-3" />
+                    polygonscan.com
+                    <ArrowUpRight className="h-4 w-4" />
                   </a>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                  <span className="text-sm font-medium text-orange-800">Lotes en Blockchain</span>
-                  <span className="text-sm text-orange-700 font-semibold">{stats.totalLotes}</span>
+                <div className="flex justify-between items-center p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border-2 border-orange-200">
+                  <span className="text-lg font-bold text-orange-800 flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Batches on Blockchain
+                  </span>
+                  <span className="text-2xl text-orange-700 font-black">{stats.totalLotes}</span>
                 </div>
               </div>
               
               {!isConnected && (
-                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800 text-center">
-                    Conecta tu wallet para comenzar a registrar lotes
+                <div className="mt-6 p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl">
+                  <p className="text-amber-800 text-lg font-bold text-center">
+                    Connect your wallet to start registering batches
                   </p>
                 </div>
               )}

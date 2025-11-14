@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search } from "lucide-react";
+import { Search, MapPin, User, Barcode, Award, Shield, Truck, Package, CheckCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Timeline from "@/components/Timeline";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ const Rastrear = () => {
     const searchValue = searchId || loteId;
     
     if (!searchValue) {
-      toast.error("Por favor ingresa un ID de lote");
+      toast.error("Please enter a batch ID");
       return;
     }
 
@@ -44,40 +44,51 @@ const Rastrear = () => {
           ubicacion: lote.ubicacion,
           calidad: lote.calidad,
           hash: lote.hash,
+          timestamp: lote.timestamp,
+          network: lote.network,
           steps: [
             {
               id: "1",
-              title: "Productor - Piura",
-              description: `Registrado por ${lote.productor}`,
-              date: new Date(lote.timestamp).toLocaleDateString("es-PE"),
+              title: "Producer - Piura",
+              description: `Registered by ${lote.productor}`,
+              date: new Date(lote.timestamp).toLocaleDateString("en-US"),
               completed: true,
+              icon: User,
             },
             {
               id: "2",
-              title: "Exportador",
-              description: "En proceso de exportación",
-              date: new Date(Date.now() + 86400000).toLocaleDateString("es-PE"),
+              title: "Exporter",
+              description: "In export process",
+              date: new Date(Date.now() + 86400000).toLocaleDateString("en-US"),
               completed: false,
               current: true,
+              icon: Truck,
             },
             {
               id: "3",
-              title: "Supermercado - Lima",
-              description: "En distribución",
+              title: "Supermarket - Lima",
+              description: "In distribution",
               completed: false,
+              icon: Package,
             },
             {
               id: "4",
-              title: "Cliente Final",
-              description: "Entregado al consumidor",
+              title: "Final Customer",
+              description: "Delivered to consumer",
               completed: false,
+              icon: CheckCircle,
             },
           ],
         };
         setLoteData(timelineData);
-        toast.success("Lote encontrado");
+        toast.success(
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <span className="font-semibold">Batch found successfully!</span>
+          </div>
+        );
       } else {
-        toast.error("Lote no encontrado. Intenta con MG-2024-001");
+        toast.error("Batch not found. Try with: MG-2024-001");
         setLoteData(null);
       }
 
@@ -86,108 +97,230 @@ const Rastrear = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
       <Navbar />
       
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8 text-center">
-            <h1 className="text-4xl font-bold mb-2">Rastrear Lote</h1>
-            <p className="text-muted-foreground">
-              Busca tu lote de mangos y visualiza su trazabilidad completa
-            </p>
+        <div className="max-w-6xl mx-auto">
+          {/* Header Section */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-4 bg-white/80 backdrop-blur-sm rounded-2xl px-8 py-4 shadow-xl border border-slate-200 mb-6">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-sky-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <Search className="h-7 w-7 text-white" />
+              </div>
+              <div className="text-left">
+                <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent">
+                  Track Batch
+                </h1>
+                <p className="text-slate-600 text-lg">
+                  Search for your mango batch and view its complete traceability
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Search Card */}
-          <Card className="shadow-soft mb-8">
-            <CardHeader>
-              <CardTitle>Buscar por ID de Lote</CardTitle>
-              <CardDescription>
-                Ingresa el código único de tu lote de mangos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <div className="flex-1 space-y-2">
-                  <Label htmlFor="search">ID del Lote</Label>
-                  <Input
-                    id="search"
-                    placeholder="Ej: MG-2024-001"
-                    value={loteId}
-                    onChange={(e) => setLoteId(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    onClick={() => handleSearch()}
-                    className="bg-gradient-primary hover:opacity-90"
-                    disabled={isSearching}
-                  >
-                    <Search className="mr-2 h-4 w-4" />
-                    Buscar
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Results */}
-          {loteData && (
-            <div className="space-y-6">
-              {/* Lote Info */}
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <CardTitle>Información del Lote</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">ID del Lote</p>
-                    <p className="font-semibold">{loteData.loteId}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Productor</p>
-                    <p className="font-semibold">{loteData.productor}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Ubicación</p>
-                    <p className="font-semibold">{loteData.ubicacion}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Calidad</p>
-                    <p className="font-semibold">{loteData.calidad}</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-muted-foreground">Hash de Transacción</p>
-                    <p className="font-mono text-xs break-all">{loteData.hash}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Timeline */}
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <CardTitle>Cadena de Suministro</CardTitle>
-                  <CardDescription>
-                    Seguimiento del lote desde su origen hasta el consumidor final
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Left Side - Search Card */}
+            <div className="lg:col-span-1">
+              <Card className="border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white sticky top-8">
+                <CardHeader className="pb-6">
+                  <CardTitle className="flex items-center gap-3 text-slate-900 text-xl">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-sky-500 rounded-xl flex items-center justify-center">
+                      <Search className="h-5 w-5 text-white" />
+                    </div>
+                    Search by Batch ID
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 text-base">
+                    Enter the unique code of your mango batch
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Timeline steps={loteData.steps} />
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <Label htmlFor="search" className="text-base font-semibold text-slate-700 flex items-center gap-2">
+                      <Barcode className="h-4 w-4 text-blue-500" />
+                      Batch ID
+                    </Label>
+                    <Input
+                      id="search"
+                      placeholder="Example: MG-2024-001"
+                      value={loteId}
+                      onChange={(e) => setLoteId(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      className="border-2 border-slate-200 rounded-xl px-4 py-3 text-lg hover:border-blue-300 focus:border-blue-500 transition-colors duration-200"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={() => handleSearch()}
+                    className="w-full bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white font-bold py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg"
+                    disabled={isSearching}
+                    size="lg"
+                  >
+                    {isSearching ? (
+                      <>
+                        <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="mr-3 h-5 w-5" />
+                        Search Batch
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Quick Tip */}
+                  <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-2xl">
+                    <p className="text-amber-800 text-sm font-medium">
+                      <strong>Tip:</strong> Try with demo ID: MG-2024-001
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
-          )}
 
-          {!loteData && !isSearching && (
-            <Card className="shadow-soft">
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Ingresa un ID de lote para comenzar el rastreo</p>
-                <p className="text-sm mt-2">Prueba con: MG-2024-001</p>
-              </CardContent>
-            </Card>
-          )}
+            {/* Right Side - Results */}
+            <div className="lg:col-span-3">
+              {loteData && (
+                <div className="space-y-8">
+                  {/* Batch Information Card */}
+                  <Card className="border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
+                    <CardHeader className="pb-6">
+                      <CardTitle className="flex items-center gap-3 text-slate-900 text-2xl">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                          <Package className="h-6 w-6 text-white" />
+                        </div>
+                        Batch Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <Barcode className="h-4 w-4 text-blue-500" />
+                            <span className="text-sm font-semibold">Batch ID</span>
+                          </div>
+                          <p className="text-lg font-bold text-slate-900">{loteData.loteId}</p>
+                        </div>
+
+                        <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <User className="h-4 w-4 text-orange-500" />
+                            <span className="text-sm font-semibold">Producer</span>
+                          </div>
+                          <p className="text-lg font-bold text-slate-900">{loteData.productor}</p>
+                        </div>
+
+                        <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <MapPin className="h-4 w-4 text-red-500" />
+                            <span className="text-sm font-semibold">Location</span>
+                          </div>
+                          <p className="text-lg font-bold text-slate-900">{loteData.ubicacion}</p>
+                        </div>
+
+                        <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <Award className="h-4 w-4 text-amber-500" />
+                            <span className="text-sm font-semibold">Quality Grade</span>
+                          </div>
+                          <p className="text-lg font-bold text-slate-900">{loteData.calidad}</p>
+                        </div>
+
+                        <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <Shield className="h-4 w-4 text-green-500" />
+                            <span className="text-sm font-semibold">Network</span>
+                          </div>
+                          <p className="text-lg font-bold text-slate-900">{loteData.network}</p>
+                        </div>
+
+                        <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <span className="text-sm font-semibold">Registration Date</span>
+                          </div>
+                          <p className="text-lg font-bold text-slate-900">
+                            {new Date(loteData.timestamp).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Transaction Hash */}
+                      <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-sky-50 border-2 border-blue-200 rounded-2xl">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Shield className="h-5 w-5 text-blue-600" />
+                          <span className="text-lg font-bold text-blue-900">Transaction Hash</span>
+                        </div>
+                        <p className="font-mono text-sm break-all bg-white/80 p-3 rounded-xl border border-blue-200">
+                          {loteData.hash}
+                        </p>
+                        <p className="text-blue-700 text-sm mt-2 font-medium">
+                          🔒 Immutably recorded on Polygon Amoy Blockchain
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Timeline Card */}
+                  <Card className="border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
+                    <CardHeader className="pb-6">
+                      <CardTitle className="flex items-center gap-3 text-slate-900 text-2xl">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                          <Truck className="h-6 w-6 text-white" />
+                        </div>
+                        Supply Chain Timeline
+                      </CardTitle>
+                      <CardDescription className="text-slate-600 text-lg">
+                        Track the batch from its origin to the final consumer
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Timeline steps={loteData.steps} />
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {!loteData && !isSearching && (
+                <Card className="border-2 border-slate-200 rounded-2xl shadow-xl bg-white">
+                  <CardContent className="py-16 text-center">
+                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-slate-400 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg mb-6">
+                      <Search className="h-10 w-10 text-white opacity-70" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-700 mb-3">
+                      Ready to Track
+                    </h3>
+                    <p className="text-slate-600 text-lg mb-2">
+                      Enter a batch ID to start tracking
+                    </p>
+                    <p className="text-slate-500 text-sm">
+                      Try with demo ID: MG-2024-001
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {isSearching && (
+                <Card className="border-2 border-slate-200 rounded-2xl shadow-xl bg-white">
+                  <CardContent className="py-16 text-center">
+                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-sky-500 rounded-2xl flex items-center justify-center shadow-lg mb-6">
+                      <div className="h-10 w-10 animate-spin rounded-full border-4 border-white border-t-transparent" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-700 mb-3">
+                      Searching Blockchain...
+                    </h3>
+                    <p className="text-slate-600 text-lg">
+                      Looking for batch on Polygon Amoy Network
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
