@@ -48,11 +48,11 @@ const Dashboard = () => {
     };
 
     cargarDatos();
-    
+
     // Escuchar cambios en localStorage
     const handleStorageChange = () => cargarDatos();
     window.addEventListener('storage', handleStorageChange);
-    
+
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
@@ -116,7 +116,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/20">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Header with Wallet Info */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
@@ -133,7 +133,7 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
-          
+
           {isConnected && (
             <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-2xl p-6 min-w-[320px] shadow-lg">
               <div className="flex items-center justify-between mb-3">
@@ -154,7 +154,7 @@ const Dashboard = () => {
         {/* Quick Actions */}
         {isConnected && (
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Button 
+            <Button
               onClick={handleRegisterNew}
               className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-8 py-3 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 text-lg"
               size="lg"
@@ -162,7 +162,7 @@ const Dashboard = () => {
               <Package className="mr-3 h-5 w-5" />
               Register New Batch
             </Button>
-            <Button 
+            <Button
               variant="outline"
               onClick={() => navigate("/rastrear")}
               className="border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 font-bold px-8 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg"
@@ -177,7 +177,7 @@ const Dashboard = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statsData.map((stat, index) => (
-            <div 
+            <div
               key={stat.title}
               className="transform hover:-translate-y-2 transition-all duration-300"
             >
@@ -217,9 +217,9 @@ const Dashboard = () => {
               </div>
             </CardHeader>
             <CardContent className="flex flex-col items-center">
-              <img 
-                src={peruMap} 
-                alt="Peru Map" 
+              <img
+                src={peruMap}
+                alt="Peru Map"
                 className="max-h-[280px] object-contain mb-6 shadow-lg rounded-2xl border border-slate-200"
               />
               <div className="grid grid-cols-3 gap-4 w-full max-w-md">
@@ -272,11 +272,10 @@ const Dashboard = () => {
                           </p>
                           <p className="text-slate-600 text-sm font-medium">{lote.productor}</p>
                         </div>
-                        <span className={`text-xs px-3 py-1.5 rounded-full font-bold ${
-                          lote.calidad === 'Premium' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' :
+                        <span className={`text-xs px-3 py-1.5 rounded-full font-bold ${lote.calidad === 'Premium' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' :
                           lote.calidad === 'Exportación' ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' :
-                          'bg-gradient-to-r from-yellow-500 to-amber-500 text-white'
-                        } shadow-sm`}>
+                            'bg-gradient-to-r from-yellow-500 to-amber-500 text-white'
+                          } shadow-sm`}>
                           {lote.calidad}
                         </span>
                       </div>
@@ -296,7 +295,7 @@ const Dashboard = () => {
                     <Package className="h-8 w-8 text-white" />
                   </div>
                   <p className="text-slate-600 text-lg mb-4 font-medium">No batches registered</p>
-                  <Button 
+                  <Button
                     onClick={handleRegisterNew}
                     className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
                   >
@@ -304,10 +303,10 @@ const Dashboard = () => {
                   </Button>
                 </div>
               )}
-              
+
               {lotes.length > 0 && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full mt-6 border-2 border-green-200 text-green-700 hover:text-green-800 hover:bg-green-50 font-bold py-3 rounded-full transition-all duration-300"
                   onClick={() => navigate("/rastrear")}
                 >
@@ -350,7 +349,7 @@ const Dashboard = () => {
                       <span className="text-lg font-bold text-slate-900">{item.percentage}%</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-4 shadow-inner">
-                      <div 
+                      <div
                         className={`h-4 rounded-full bg-gradient-to-r ${item.color} shadow-lg transition-all duration-1000 ease-out`}
                         style={{ width: `${item.percentage}%` }}
                       />
@@ -399,9 +398,9 @@ const Dashboard = () => {
                     <Eye className="h-5 w-5" />
                     Block Explorer
                   </span>
-                  <a 
-                    href="https://amoy.polygonscan.com" 
-                    target="_blank" 
+                  <a
+                    href="https://amoy.polygonscan.com"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-lg text-purple-700 hover:text-purple-800 hover:underline flex items-center gap-2 font-bold transition-all duration-200"
                   >
@@ -417,7 +416,7 @@ const Dashboard = () => {
                   <span className="text-2xl text-orange-700 font-black">{stats.totalLotes}</span>
                 </div>
               </div>
-              
+
               {!isConnected && (
                 <div className="mt-6 p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl">
                   <p className="text-amber-800 text-lg font-bold text-center">

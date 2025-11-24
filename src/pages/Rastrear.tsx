@@ -1,30 +1,31 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Search, MapPin, User, Barcode, Award, Shield, Truck, Package, CheckCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import Timeline from "@/components/Timeline";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Search, Package, MapPin, User, Calendar, ArrowRight, CheckCircle, Truck, Shield, Barcode, Award } from "lucide-react";
 import { toast } from "sonner";
+import QRGenerator from "@/components/QRGenerator";
 
 const Rastrear = () => {
   const [searchParams] = useSearchParams();
-  const [loteId, setLoteId] = useState(searchParams.get("lote") || "");
+  const [loteId, setLoteId] = useState("");
   const [loteData, setLoteData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     const initialLote = searchParams.get("lote");
     if (initialLote) {
+      setLoteId(initialLote);
       handleSearch(initialLote);
     }
   }, []);
 
   const handleSearch = async (searchId?: string) => {
     const searchValue = searchId || loteId;
-    
+
     if (!searchValue) {
       toast.error("Please enter a batch ID");
       return;
@@ -99,7 +100,7 @@ const Rastrear = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-6xl mx-auto">
           {/* Header Section */}
@@ -149,7 +150,7 @@ const Rastrear = () => {
                       className="border-2 border-slate-200 rounded-xl px-4 py-3 text-lg hover:border-blue-300 focus:border-blue-500 transition-colors duration-200"
                     />
                   </div>
-                  
+
                   <Button
                     onClick={() => handleSearch()}
                     className="w-full bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white font-bold py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg"
@@ -181,7 +182,7 @@ const Rastrear = () => {
 
             {/* Right Side - Results */}
             <div className="lg:col-span-3">
-              {loteData && (
+              {loteData ? (
                 <div className="space-y-8">
                   {/* Batch Information Card */}
                   <Card className="border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
@@ -249,18 +250,25 @@ const Rastrear = () => {
                         </div>
                       </div>
 
-                      {/* Transaction Hash */}
-                      <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-sky-50 border-2 border-blue-200 rounded-2xl">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Shield className="h-5 w-5 text-blue-600" />
-                          <span className="text-lg font-bold text-blue-900">Transaction Hash</span>
+                      {/* QR Code Section */}
+                      <div className="mt-6 flex flex-col md:flex-row gap-6">
+                        <div className="flex-1 p-4 bg-gradient-to-br from-blue-50 to-sky-50 border-2 border-blue-200 rounded-2xl">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Shield className="h-5 w-5 text-blue-600" />
+                            <span className="text-lg font-bold text-blue-900">Transaction Hash</span>
+                          </div>
+                          <p className="font-mono text-sm break-all bg-white/80 p-3 rounded-xl border border-blue-200">
+                            {loteData.hash}
+                          </p>
+                          <p className="text-blue-700 text-sm mt-2 font-medium">
+                            🔒 Immutably recorded on Polygon Amoy Blockchain
+                          </p>
                         </div>
-                        <p className="font-mono text-sm break-all bg-white/80 p-3 rounded-xl border border-blue-200">
-                          {loteData.hash}
-                        </p>
-                        <p className="text-blue-700 text-sm mt-2 font-medium">
-                          🔒 Immutably recorded on Polygon Amoy Blockchain
-                        </p>
+
+                        <div className="flex-shrink-0 bg-white p-4 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col items-center">
+                          <p className="text-sm font-bold text-slate-700 mb-2">Batch QR Code</p>
+                          <QRGenerator batchId={loteData.loteId} size={120} />
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -279,29 +287,73 @@ const Rastrear = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Timeline steps={loteData.steps} />
+                      <div className="relative">
+                        {/* Timeline Line */}
+                        <div className="absolute left-8 top-0 bottom-0 w-1 bg-slate-200 rounded-full" />
+
+                        <div className="space-y-8 relative">
+                          {loteData.steps.map((step: any, index: number) => (
+                            <div key={step.id} className="flex gap-6 relative">
+                              {/* Icon */}
+                              <div className={`relative z-10 w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg border-4 border-white transition-all duration-300 ${step.completed
+                                  ? "bg-gradient-to-br from-green-500 to-emerald-500"
+                                  : step.current
+                                    ? "bg-gradient-to-br from-blue-500 to-sky-500 animate-pulse"
+                                    : "bg-slate-200"
+                                }`}>
+                                <step.icon className={`h-8 w-8 ${step.completed || step.current ? "text-white" : "text-slate-400"}`} />
+                              </div>
+
+                              {/* Content */}
+                              <div className={`flex-1 p-6 rounded-2xl border-2 transition-all duration-300 ${step.completed
+                                  ? "bg-green-50 border-green-200"
+                                  : step.current
+                                    ? "bg-blue-50 border-blue-200 shadow-md"
+                                    : "bg-slate-50 border-slate-200"
+                                }`}>
+                                <div className="flex justify-between items-start mb-2">
+                                  <h4 className={`text-xl font-bold ${step.completed ? "text-green-900" : step.current ? "text-blue-900" : "text-slate-700"
+                                    }`}>
+                                    {step.title}
+                                  </h4>
+                                  {step.date && (
+                                    <span className={`text-sm font-semibold px-3 py-1 rounded-full ${step.completed ? "bg-green-200 text-green-800" : "bg-blue-200 text-blue-800"
+                                      }`}>
+                                      {step.date}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className={`${step.completed ? "text-green-700" : step.current ? "text-blue-700" : "text-slate-500"
+                                  }`}>
+                                  {step.description}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
-              )}
-
-              {!loteData && !isSearching && (
-                <Card className="border-2 border-slate-200 rounded-2xl shadow-xl bg-white">
-                  <CardContent className="py-16 text-center">
-                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-slate-400 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg mb-6">
-                      <Search className="h-10 w-10 text-white opacity-70" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-slate-700 mb-3">
-                      Ready to Track
-                    </h3>
-                    <p className="text-slate-600 text-lg mb-2">
-                      Enter a batch ID to start tracking
-                    </p>
-                    <p className="text-slate-500 text-sm">
-                      Try with demo ID: MG-2024-001
-                    </p>
-                  </CardContent>
-                </Card>
+              ) : (
+                !isSearching && (
+                  <Card className="border-2 border-slate-200 rounded-2xl shadow-xl bg-white">
+                    <CardContent className="py-16 text-center">
+                      <div className="w-20 h-20 mx-auto bg-gradient-to-br from-slate-200 to-slate-300 rounded-2xl flex items-center justify-center shadow-lg mb-6">
+                        <Package className="h-10 w-10 text-slate-500" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-700 mb-3">
+                        Ready to Track
+                      </h3>
+                      <p className="text-slate-600 text-lg mb-2">
+                        Enter a batch ID to start tracking
+                      </p>
+                      <p className="text-slate-500 text-sm">
+                        Try with demo ID: MG-2024-001
+                      </p>
+                    </CardContent>
+                  </Card>
+                )
               )}
 
               {isSearching && (

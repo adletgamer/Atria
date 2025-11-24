@@ -78,10 +78,10 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      
+
       {/* Hero Section */}
       <section className="relative h-[700px] flex items-center justify-center overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 z-0"
           style={{
             backgroundImage: `url(${heroImage})`,
@@ -91,7 +91,7 @@ const Index = () => {
         >
           <div className="absolute inset-0 bg-gradient-hero" />
         </div>
-        
+
         <div className="container relative z-10 mx-auto px-4 text-center text-white">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-7xl font-black mb-6 drop-shadow-2xl leading-tight">
@@ -105,17 +105,17 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/registrar">
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-8 py-4 rounded-full shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 text-lg"
                 >
                   Register Batch
                 </Button>
               </Link>
               <Link to="/rastrear">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
+                <Button
+                  size="lg"
+                  variant="outline"
                   className="border-2 border-white text-white hover:bg-white/20 font-bold px-8 py-4 rounded-full backdrop-blur-sm hover:scale-105 transition-all duration-300 text-lg"
                 >
                   Track Batch
@@ -156,7 +156,7 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {steps.map((step, index) => (
-              <div 
+              <div
                 key={step.title}
                 className="relative group"
               >
@@ -200,7 +200,7 @@ const Index = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {valueProposals.map((proposal) => (
-              <div 
+              <div
                 key={proposal.category}
                 className="relative group"
               >
@@ -246,8 +246,8 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature) => (
-              <Card 
-                key={feature.title} 
+              <Card
+                key={feature.title}
                 className="border-2 border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-white group"
               >
                 <CardHeader className="p-0 mb-4">
@@ -281,17 +281,17 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/dashboard">
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="bg-white text-orange-600 hover:bg-white/90 font-bold px-8 py-4 rounded-full shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 text-lg"
                 >
                   View Dashboard
                 </Button>
               </Link>
               <Link to="/rastrear">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
+                <Button
+                  size="lg"
+                  variant="outline"
                   className="border-2 border-white text-white hover:bg-white/20 font-bold px-8 py-4 rounded-full backdrop-blur-sm hover:scale-105 transition-all duration-300 text-lg"
                 >
                   Try Tracking
@@ -314,7 +314,7 @@ const Index = () => {
             </span>
           </div>
           <p className="text-slate-600 max-w-md mx-auto">
-            © 2024 MangoChain Tracker. Developed for Peruvian farmers with blockchain technology.
+            © 2025 MangoChain Tracker. Developed for Peruvian farmers with blockchain technology.
           </p>
         </div>
       </footer>

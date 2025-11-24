@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Registrar from "./pages/Registrar";
 import Rastrear from "./pages/Rastrear";
 import Dashboard from "./pages/Dashboard";
+import Verify from "./pages/Verify";
+import QRTest from "./pages/QRTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/registrar" element={<Registrar />} />
           <Route path="/rastrear" element={<Rastrear />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/verify/:batchId" element={<Verify />} />
+          <Route path="/qr-test" element={<QRTest />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
