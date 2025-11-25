@@ -1,84 +1,133 @@
 # 🥭 MangoChain - Blockchain Supply Chain Tracking
 
 ![MangoChain](https://img.shields.io/badge/MangoChain-Blockchain%20Supply%20Chain-orange)
-![Polygon](https://img.shields.io/badge/Polygon-Amoy%20Testnet-blue)
+![Polygon](https://img.shields.io/badge/Polygon-Amoy%20Testnet-purple)
 ![React](https://img.shields.io/badge/React-18.2+-61dafb)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178c6)
+![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636)
 
-A modern blockchain-based supply chain tracking platform for Peruvian mango producers, bringing transparency and trust to agricultural supply chains using Polygon blockchain technology.
+A decentralized application (dApp) for tracking the Peruvian mango supply chain on the Polygon blockchain. It ensures transparency, quality certification, and traceability from harvest to export.
 
-## 🎯 Problem Statement
+## 🌟 Key Features
 
-The agricultural supply chain faces significant challenges:
-- ❌ **No verifiable proof** of origin for premium products
-- ❌ **Farmers cannot prove authenticity** to access premium markets
-- ❌ **Consumers cannot verify** if "premium" claims are legitimate
-- ❌ **Middlemen capture most value**, leaving farmers with minimal profits
-- ❌ **Counterfeit products** damage brand reputation and consumer trust
+### 📦 Batch Registration (`MangoRegistry`)
+- Producers can register mango batches with immutable data:
+  - Variety (Kent, Edward, Haden)
+  - Origin Location (GPS/Region)
+  - Harvest Date
+- Generates a unique **Batch ID** on the blockchain.
 
-## 🚀 Our Solution
+### ⭐ Quality Certification (`QualityCertification`)
+- Authorized certifiers can issue digital quality certificates.
+- Verifies grades: **Premium**, **Export**, **First Grade**, **Second Grade**.
+- Certificates are linked to the batch and stored permanently.
 
-MangoChain provides:
-- ✅ **Digital certificates of origin** on Polygon blockchain
-- ✅ **Immutable tracking** from farm to consumer
-- ✅ **QR code verification** for end consumers
-- ✅ **Direct value transfer** to farmers
-- ✅ **Tamper-proof quality claims**
+### 🚚 Supply Chain Tracking (`SupplyChainTracking`)
+- Tracks the batch through 8 distinct stages:
+  1. 🌾 **Harvest**
+  2. 🏭 **Processing**
+  3. 🔬 **Quality Control**
+  4. 📦 **Packaging**
+  5. 🚢 **Export**
+  6. 🚛 **Distribution**
+  7. 🏪 **Retail**
+  8. ✅ **Delivered**
+- Each event is timestamped and signed by an authorized handler.
 
-## ✨ Features
+### 📱 Consumer Experience
+- **QR Code Integration**: Consumers can scan a QR code to view the full history.
+- **Interactive Dashboard**: Real-time metrics on production and distribution.
+- **Visual Maps**: Production regions visualization.
 
-### 🎨 Modern Design System
-- **MangoChain Design System** with tropical colors
-- **Responsive design** for all devices
-- **Smooth animations** and transitions
-- **Professional UI/UX** with intuitive navigation
-
-### 🔗 Blockchain Integration
-- **Polygon Amoy Testnet** for low-cost transactions
-- **MetaMask wallet** connectivity
-- **Smart contract** interactions
-- **Immutable record keeping**
-
-### 📊 Dashboard & Analytics
-- **Real-time statistics** and metrics
-- **Batch tracking** with visual timeline
-- **Supply chain visualization**
-- **Quality distribution** analytics
-
-### 🔍 Batch Management
-- **Register new batches** with origin data
-- **Track batch movement** through supply chain
-- **Verify authenticity** with transaction history
-- **QR code generation** for consumer verification
+---
 
 ## 🛠️ Tech Stack
 
 **Frontend:**
-- React 18 + TypeScript
-- Tailwind CSS + Shadcn/ui
-- Vite Build Tool
-- Lucide React Icons
+- **Framework**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS + Shadcn/ui
+- **Animations**: Framer Motion
+- **Web3 Integration**: Wagmi v2 + Viem + RainbowKit
+- **Icons**: Lucide React
 
 **Blockchain:**
-- Polygon Amoy Testnet
-- MetaMask/Web3 Integration
-- Ethers.js
-- Smart Contract Interactions
+- **Network**: Polygon Amoy Testnet
+- **Languages**: Solidity ^0.8.0
+- **Development Environment**: Hardhat
+- **Wallet**: MetaMask
 
-**Storage:**
-- LocalStorage (Demo)
-- IPFS (Planned)
+---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
-- MetaMask wallet
-- Polygon Amoy Testnet configured
+- Node.js (v18 or higher)
+- MetaMask extension installed in your browser
+- Some test MATIC on Polygon Amoy (get it from a faucet)
 
 ### Installation
 
 1. **Clone the repository**
+   ```bash
+   git clone https://github.com/adletgamer/mango-rastreo-chain.git
+   cd mango-rastreo-chain
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+4. **Open the app**
+   - Visit `http://localhost:5173` (or the port shown in your terminal).
+   - Connect your MetaMask wallet.
+
+---
+
+## 📜 Smart Contracts Architecture
+
+The system is built on three main interacting contracts:
+
+| Contract | Purpose | Key Functions |
+|----------|---------|---------------|
+| **MangoRegistry.sol** | Core database of batches | `registerBatch()`, `getBatch()` |
+| **QualityCertification.sol** | Quality assurance layer | `certifyQuality()`, `revokeCertifier()` |
+| **SupplyChainTracking.sol** | Logistics and movement | `addTrackingEvent()`, `getBatchHistory()` |
+
+---
+
+## 🧪 Running Tests
+
+To run the smart contract tests (requires Hardhat setup):
+
 ```bash
-git clone https://github.com/your-username/mangochain.git
-cd mangochain
+npx hardhat test
+```
+
+## 🚢 Deployment
+
+To deploy the smart contracts to Polygon Amoy:
+
+1. Create a `.env` file with your private key and Alchemy/Infura URL.
+2. Run the deployment script:
+   ```bash
+   npx hardhat run scripts/deploy.js --network amoy
+   ```
+
+---
+
+## 🤝 Contributing
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
