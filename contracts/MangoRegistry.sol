@@ -5,7 +5,18 @@ pragma solidity ^0.8.0;
  * @title MangoRegistry
  * @dev Main contract for registering mango batches on the blockchain
  */
+interface IVerification {
+    function isVerified(address _user) external view returns (bool);
+}
+
 contract MangoRegistry {
+    address public owner;
+    IVerification public verificationContract;
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can perform this action");
+        _;
+    }
     struct Batch {
         string batchId;
         address producer;
@@ -24,6 +35,10 @@ contract MangoRegistry {
     
     // Array of all batch IDs for enumeration
     string[] public allBatchIds;
+
+    constructor() {
+        owner = msg.sender;
+    }
     
     // Events
     event BatchRegistered(
@@ -47,6 +62,10 @@ contract MangoRegistry {
         string memory _location,
         string memory _quality
     ) public {
+        if (address(verificationContract) != address(0)) {
+            require(verificationContract.isVerified(msg.sender), "Producer not verified");
+        }
+
         require(!batches[_batchId].exists, "Batch already exists");
         require(bytes(_batchId).length > 0, "Batch ID cannot be empty");
         require(bytes(_location).length > 0, "Location cannot be empty");
@@ -106,5 +125,13 @@ contract MangoRegistry {
         
         batches[_batchId].isActive = false;
         emit BatchDeactivated(_batchId, block.timestamp);
+    }
+
+    /**
+     * @dev Set the verification contract address
+     * @param _verificationContract Address of the Verification contract
+     */
+    function setVerificationContract(address _verificationContract) public onlyOwner {
+        verificationContract = IVerification(_verificationContract);
     }
 }

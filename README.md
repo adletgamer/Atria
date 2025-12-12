@@ -1,11 +1,11 @@
-# 🥭 MangoChain - Blockchain Supply Chain Tracking
+# 🥭 HarvestLink Protocol (MangoChain Pilot) - Tokenizing Agricultural Assets for Farmer Finance
 
 ![MangoChain](https://img.shields.io/badge/MangoChain-Blockchain%20Supply%20Chain-orange)
 ![Polygon](https://img.shields.io/badge/Polygon-Amoy%20Testnet-purple)
 ![React](https://img.shields.io/badge/React-18.2+-61dafb)
 ![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636)
 
-A decentralized application (dApp) for tracking the Peruvian mango supply chain on the Polygon blockchain. It ensures transparency, quality certification, and traceability from harvest to export.
+This repository contains the MangoChain pilot, the first implementation of the HarvestLink Protocol vision. HarvestLink is a blockchain-based protocol designed to tokenize future harvests, providing smallholder farmers with access to upfront capital and equitable markets. This specific dApp tracks the Peruvian mango supply chain as a proof-of-concept for the broader tokenization model.
 
 ## 🌟 Key Features
 
@@ -97,6 +97,7 @@ The system is built on three main interacting contracts:
 | **MangoRegistry.sol** | Core database of batches | `registerBatch()`, `getBatch()` |
 | **QualityCertification.sol** | Quality assurance layer | `certifyQuality()`, `revokeCertifier()` |
 | **SupplyChainTracking.sol** | Logistics and movement | `addTrackingEvent()`, `getBatchHistory()` |
+| **Verification.sol** | User verification | `verifyUser()`, `revokeUser()` |
 
 ---
 

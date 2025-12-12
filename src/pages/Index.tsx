@@ -58,7 +58,8 @@ const Index = () => {
         "Digital origin certification",
         "Added value for export",
         "Access to premium markets",
-        "Reduction of intermediaries"
+        "Reduction of intermediaries",
+        "Access to advance financing by tokenizing future harvests"
       ],
       gradient: "from-orange-500 to-amber-500"
     },
@@ -101,7 +102,7 @@ const Index = () => {
               </span>
             </h1>
             <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto drop-shadow-md leading-relaxed">
-              Peruvian mango tracking with blockchain technology
+              Tokenizing Future Harvests for Farmer Liquidity & Equity
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/registrar">
@@ -146,6 +147,13 @@ const Index = () => {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 max-w-4xl mx-auto mb-10 text-left">
+              <h3 className="text-xl font-bold text-orange-800 mb-2">This is MangoChain: The first pilot for the HarvestLink Protocol.</h3>
+              <p className="text-orange-700">
+                We are building a universal system to turn future harvests into digital assets, giving farmers access to upfront capital.
+              </p>
+            </div>
+
             <h2 className="text-4xl md:text-5xl font-black mb-4 bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
               How It Works in 3 Simple Steps
             </h2>
