@@ -235,6 +235,10 @@ const Dashboard = () => {
                   <p className="font-bold text-blue-800 text-lg">Ica</p>
                   <p className="text-blue-600 text-sm font-medium">7% of production</p>
                 </div>
+                <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200 shadow-lg">
+                  <p className="font-bold text-blue-800 text-lg">La Libertad</p>
+                  <p className="text-blue-600 text-sm font-medium">7% of production</p>
+                </div>
               </div>
             </CardContent>
           </Card>

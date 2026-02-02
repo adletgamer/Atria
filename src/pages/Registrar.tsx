@@ -7,20 +7,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Wallet, MapPin, User, Barcode, Sparkles, Shield, Zap, CheckCircle, ArrowRight, Gem, Star, Award } from "lucide-react";
+import { Loader2, Wallet, MapPin, User, Barcode, Sparkles, Shield, Zap, CheckCircle, ArrowRight, Gem, Star, Award, Leaf } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useMetaMask } from "@/hooks/useMetaMask";
 import QRGenerator from "@/components/QRGenerator";
+import { VARIETY_OPTIONS, getVarietyById } from "@/constants/mangoVarieties";
+import { useTranslation } from "@/config/i18n";
 
 const Registrar = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
-  const { isConnected, connectWallet, formatAddress, account, error } = useMetaMask();
+  const { isConnected, connectWallet, formatAddress, account } = useMetaMask();
+  const lang: 'es' | 'en' = 'es';
+  const i18n = useTranslation(lang);
+
   const [formData, setFormData] = useState({
     loteId: "",
     productor: "",
     ubicacion: "Piura",
+    variedad: "",
     calidad: "",
   });
 
@@ -36,14 +42,19 @@ const Registrar = () => {
       return;
     }
 
-    if (!formData.loteId || !formData.productor || !formData.calidad) {
-      toast.error("Please complete all fields");
+    if (!formData.loteId || !formData.productor || !formData.calidad || !formData.variedad) {
+      toast.error(i18n.registrar.selectVariety);
+      return;
+    }
+
+    const varietyInfo = getVarietyById(formData.variedad);
+    if (!varietyInfo) {
+      toast.error(i18n.registrar.varietyRequired);
       return;
     }
 
     setIsLoading(true);
 
-    // Simulación de registro en blockchain
     setTimeout(() => {
       const mockHash = `0x${Math.random().toString(16).substring(2, 42)}`;
 
@@ -51,18 +62,20 @@ const Registrar = () => {
         <div className="space-y-2 p-2">
           <div className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-500" />
-            <span className="font-bold text-lg">Batch Registered!</span>
+            <span className="font-bold text-lg">{i18n.registrar.registrationSuccess}</span>
           </div>
           <p className="text-sm text-slate-600">Transaction: {mockHash.slice(0, 20)}...</p>
+          <p className="text-sm text-slate-600">Variety: {varietyInfo.name}</p>
         </div>
       );
 
-      // Guardar en localStorage
       const lotes = JSON.parse(localStorage.getItem("lotes") || "[]");
       const newLote = {
         loteId: formData.loteId,
         productor: formData.productor,
         ubicacion: formData.ubicacion,
+        variedad: formData.variedad,
+        varietyName: varietyInfo.name,
         calidad: formData.calidad,
         hash: mockHash,
         timestamp: new Date().toISOString(),
@@ -86,11 +99,11 @@ const Registrar = () => {
       loteId: "",
       productor: "",
       ubicacion: "Piura",
+      variedad: "",
       calidad: "",
     });
   };
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -133,10 +146,10 @@ const Registrar = () => {
               </motion.div>
               <div className="text-left">
                 <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
-                  Register Batch
+                  {i18n.registrar.title}
                 </h1>
                 <p className="text-slate-600 text-lg">
-                  Register your mango batch on the blockchain
+                  {i18n.registrar.subtitle}
                 </p>
               </div>
             </div>
@@ -167,15 +180,30 @@ const Registrar = () => {
                         </motion.div>
                         <div>
                           <CardTitle className="text-3xl font-black text-green-900">
-                            Registration Successful!
+                            {i18n.registrar.registrationSuccess}
                           </CardTitle>
                           <CardDescription className="text-green-700 text-lg">
-                            Your batch has been registered on the blockchain
+                            {i18n.registrar.batchRegistered}
                           </CardDescription>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
+                      {/* Variedad Info */}
+                      {formData.variedad && (
+                        <div className="p-6 bg-white/80 rounded-2xl border-2 border-green-200">
+                          <p className="text-sm font-semibold text-green-800 mb-3">Variedad Registrada</p>
+                          <div className="flex items-center gap-4">
+                            <div className="text-3xl">{getVarietyById(formData.variedad)?.emoji}</div>
+                            <div>
+                              <p className="font-bold text-lg text-slate-900">{getVarietyById(formData.variedad)?.name}</p>
+                              <p className="text-sm text-slate-600">{getVarietyById(formData.variedad)?.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* QR Code */}
                       <div className="p-6 bg-white/80 rounded-2xl border-2 border-green-200">
                         <p className="text-sm font-semibold text-green-800 mb-4">Batch QR Code</p>
                         <QRGenerator batchId={formData.loteId} />
@@ -188,7 +216,7 @@ const Registrar = () => {
                           size="lg"
                         >
                           <ArrowRight className="mr-2 h-5 w-5" />
-                          Track Batch
+                          {i18n.registrar.trackBatch}
                         </Button>
                         <Button
                           onClick={handleRegisterAnother}
@@ -196,7 +224,7 @@ const Registrar = () => {
                           className="flex-1 border-2 border-green-300 text-green-700 hover:bg-green-50 font-bold py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
                           size="lg"
                         >
-                          Register Another
+                          {i18n.registrar.registerAnother}
                         </Button>
                       </div>
                     </CardContent>
@@ -216,10 +244,10 @@ const Registrar = () => {
                             <Wallet className="h-10 w-10 text-white" />
                           </motion.div>
                           <h3 className="text-2xl font-bold text-amber-900 mb-3">
-                            Wallet Not Connected
+                            {i18n.registrar.walletNotConnected}
                           </h3>
                           <p className="text-amber-700 mb-6 text-lg leading-relaxed">
-                            Connect your MetaMask wallet to register batches on Polygon Amoy Testnet
+                            {i18n.registrar.connectWalletMessage}
                           </p>
                           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                             <Button
@@ -228,12 +256,12 @@ const Registrar = () => {
                               size="lg"
                             >
                               <Wallet className="mr-3 h-5 w-5" />
-                              Connect Wallet
+                              {i18n.registrar.connectWallet}
                             </Button>
                           </motion.div>
                           <div className="mt-6 p-4 bg-blue-50/80 border-2 border-blue-200 rounded-2xl backdrop-blur-sm">
                             <p className="text-blue-800 font-semibold text-sm">
-                              <strong>Required Network:</strong> Polygon Amoy Testnet (Chain ID: 80002)
+                              <strong>{i18n.registrar.requiredNetwork}:</strong> Polygon Amoy Testnet (Chain ID: 80002)
                             </p>
                           </div>
                         </CardContent>
@@ -250,7 +278,7 @@ const Registrar = () => {
                           <div>
                             <p className="text-emerald-800 font-bold text-lg flex items-center gap-2">
                               <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-                              ✅ Wallet Connected
+                              ✅ {i18n.registrar.walletConnected}
                             </p>
                             <p className="text-emerald-700 font-mono text-sm mt-1">
                               {formatAddress(account)}
@@ -258,7 +286,7 @@ const Registrar = () => {
                           </div>
                           <div className="text-right">
                             <p className="text-emerald-600 text-sm font-semibold">
-                              Polygon Amoy
+                              {i18n.registrar.polygonAmoy}
                             </p>
                             <p className="text-emerald-500 text-xs">Chain ID: 80002</p>
                           </div>
@@ -277,10 +305,10 @@ const Registrar = () => {
                               >
                                 <Shield className="h-6 w-6 text-white" />
                               </motion.div>
-                              Batch Registration Form
+                              {i18n.registrar.formTitle}
                             </CardTitle>
                             <CardDescription className="text-slate-600 text-lg">
-                              Complete all fields to register your batch on the blockchain
+                              {i18n.registrar.formDescription}
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
@@ -292,11 +320,11 @@ const Registrar = () => {
                               >
                                 <Label htmlFor="loteId" className="text-base font-semibold text-slate-700 flex items-center gap-2">
                                   <Barcode className="h-5 w-5 text-orange-500" />
-                                  Batch ID *
+                                  {i18n.registrar.batchId} *
                                 </Label>
                                 <Input
                                   id="loteId"
-                                  placeholder="Example: MG-2024-001"
+                                  placeholder={i18n.registrar.batchIdPlaceholder}
                                   value={formData.loteId}
                                   onChange={(e) => setFormData({ ...formData, loteId: e.target.value })}
                                   className="border-2 border-slate-200 rounded-xl px-4 py-3 text-lg hover:border-orange-300 focus:border-orange-500 transition-all duration-200 focus:ring-2 focus:ring-orange-200"
@@ -311,11 +339,11 @@ const Registrar = () => {
                               >
                                 <Label htmlFor="productor" className="text-base font-semibold text-slate-700 flex items-center gap-2">
                                   <User className="h-5 w-5 text-orange-500" />
-                                  Producer Name *
+                                  {i18n.registrar.producerName} *
                                 </Label>
                                 <Input
                                   id="productor"
-                                  placeholder="Producer name"
+                                  placeholder={i18n.registrar.producerNamePlaceholder}
                                   value={formData.productor}
                                   onChange={(e) => setFormData({ ...formData, productor: e.target.value })}
                                   className="border-2 border-slate-200 rounded-xl px-4 py-3 text-lg hover:border-orange-300 focus:border-orange-500 transition-all duration-200 focus:ring-2 focus:ring-orange-200"
@@ -331,7 +359,7 @@ const Registrar = () => {
                                 >
                                   <Label htmlFor="ubicacion" className="text-base font-semibold text-slate-700 flex items-center gap-2">
                                     <MapPin className="h-5 w-5 text-orange-500" />
-                                    Location
+                                    {i18n.registrar.location}
                                   </Label>
                                   <Select
                                     value={formData.ubicacion}
@@ -341,9 +369,9 @@ const Registrar = () => {
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl border-2 border-slate-200">
-                                      <SelectItem value="Piura" className="text-lg py-3 cursor-pointer hover:bg-orange-50">Piura</SelectItem>
-                                      <SelectItem value="Lambayeque" className="text-lg py-3 cursor-pointer hover:bg-orange-50">Lambayeque</SelectItem>
-                                      <SelectItem value="Ica" className="text-lg py-3 cursor-pointer hover:bg-orange-50">Ica</SelectItem>
+                                      <SelectItem value="Piura" className="text-lg py-3 cursor-pointer hover:bg-orange-50">{i18n.registrar.piura}</SelectItem>
+                                      <SelectItem value="Lambayeque" className="text-lg py-3 cursor-pointer hover:bg-orange-50">{i18n.registrar.lambayeque}</SelectItem>
+                                      <SelectItem value="Ica" className="text-lg py-3 cursor-pointer hover:bg-orange-50">{i18n.registrar.ica}</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </motion.div>
@@ -355,44 +383,100 @@ const Registrar = () => {
                                 >
                                   <Label htmlFor="calidad" className="text-base font-semibold text-slate-700 flex items-center gap-2">
                                     <Gem className="h-5 w-5 text-orange-500" />
-                                    Quality Grade *
+                                    {i18n.registrar.qualityGrade} *
                                   </Label>
                                   <Select
                                     value={formData.calidad}
                                     onValueChange={(value) => setFormData({ ...formData, calidad: value })}
                                   >
                                     <SelectTrigger className="border-2 border-slate-200 rounded-xl px-4 py-3 text-lg hover:border-orange-300 focus:border-orange-500 transition-all duration-200">
-                                      <SelectValue placeholder="Select quality" />
+                                      <SelectValue placeholder={i18n.registrar.qualityPlaceholder} />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl border-2 border-slate-200">
                                       <SelectItem value="Premium" className="text-lg py-3 cursor-pointer hover:bg-green-50">
                                         <div className="flex items-center gap-2">
                                           <Star className="h-4 w-4 text-green-500" />
-                                          Premium
+                                          {i18n.registrar.premium}
                                         </div>
                                       </SelectItem>
                                       <SelectItem value="Export" className="text-lg py-3 cursor-pointer hover:bg-blue-50">
                                         <div className="flex items-center gap-2">
                                           <Gem className="h-4 w-4 text-blue-500" />
-                                          Export
+                                          {i18n.registrar.export}
                                         </div>
                                       </SelectItem>
                                       <SelectItem value="First Grade" className="text-lg py-3 cursor-pointer hover:bg-yellow-50">
                                         <div className="flex items-center gap-2">
                                           <Award className="h-4 w-4 text-yellow-500" />
-                                          First Grade
+                                          {i18n.registrar.firstGrade}
                                         </div>
                                       </SelectItem>
                                       <SelectItem value="Second Grade" className="text-lg py-3 cursor-pointer hover:bg-slate-50">
                                         <div className="flex items-center gap-2">
                                           <Award className="h-4 w-4 text-slate-500" />
-                                          Second Grade
+                                          {i18n.registrar.secondGrade}
                                         </div>
                                       </SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </motion.div>
                               </div>
+
+                              {/* Variety Field - NEW */}
+                              <motion.div
+                                whileHover={{ scale: 1.01 }}
+                                className="space-y-3"
+                              >
+                                <Label htmlFor="variedad" className="text-base font-semibold text-slate-700 flex items-center gap-2">
+                                  <Leaf className="h-5 w-5 text-green-600" />
+                                  {i18n.registrar.variety} *
+                                </Label>
+                                <Select
+                                  value={formData.variedad}
+                                  onValueChange={(value) => setFormData({ ...formData, variedad: value })}
+                                >
+                                  <SelectTrigger className="border-2 border-slate-200 rounded-xl px-4 py-3 text-lg hover:border-orange-300 focus:border-orange-500 transition-all duration-200">
+                                    <SelectValue placeholder={i18n.registrar.varietyPlaceholder} />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-xl border-2 border-slate-200 max-h-96">
+                                    {VARIETY_OPTIONS.map((variety) => (
+                                      <SelectItem
+                                        key={variety.value}
+                                        value={variety.value}
+                                        className="text-lg py-3 cursor-pointer hover:bg-orange-50"
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <span className="text-2xl">{variety.emoji}</span>
+                                          <div className="text-left">
+                                            <p className="font-bold">{variety.label}</p>
+                                            <p className="text-xs text-slate-600">{variety.description}</p>
+                                          </div>
+                                          {variety.exportable && (
+                                            <span className="text-xs font-semibold text-blue-600 ml-2">Export</span>
+                                          )}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+
+                                {/* Variety Preview */}
+                                {formData.variedad && getVarietyById(formData.variedad) && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-3xl">{getVarietyById(formData.variedad)?.emoji}</span>
+                                      <div>
+                                        <p className="font-bold text-slate-900">{getVarietyById(formData.variedad)?.name}</p>
+                                        <p className="text-sm text-slate-600">{getVarietyById(formData.variedad)?.description}</p>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </motion.div>
 
                               <motion.div
                                 whileHover={{ scale: 1.02 }}
@@ -408,12 +492,12 @@ const Registrar = () => {
                                     {isLoading ? (
                                       <>
                                         <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                                        Registering on Blockchain...
+                                        {i18n.registrar.registering}
                                       </>
                                     ) : (
                                       <>
                                         <Zap className="mr-3 h-5 w-5" />
-                                        Register on Polygon Amoy
+                                        {i18n.registrar.register}
                                       </>
                                     )}
                                   </span>
@@ -431,11 +515,10 @@ const Registrar = () => {
                         className="mt-8 p-6 bg-gradient-to-br from-slate-50 to-blue-50 border-2 border-slate-200 rounded-2xl shadow-lg"
                       >
                         <p className="text-slate-700 text-lg leading-relaxed">
-                          <strong>Note:</strong> When registering, a transaction will be simulated on Polygon Amoy Testnet.
-                          Make sure you have test MATIC in your wallet for future real transactions.
+                          <strong>{i18n.registrar.note}:</strong> {i18n.registrar.noteMessage}
                         </p>
                         <p className="text-slate-600 text-sm mt-3 font-semibold">
-                          <strong>Network:</strong> Polygon Amoy Testnet (Chain ID: 80002)
+                          <strong>{i18n.registrar.network}:</strong> Polygon Amoy Testnet (Chain ID: 80002)
                         </p>
                       </motion.div>
                     </>

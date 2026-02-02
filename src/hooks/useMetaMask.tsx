@@ -1,197 +1,152 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
+import { polygonAmoy } from 'wagmi/chains';
+import { useToast } from '@/components/ui/use-toast';
 
+/**
+ * Hook personalizado para gestionar la conexión de wallet con Wagmi
+ * Proporciona una interfaz simplificada sobre los hooks de Wagmi
+ * 
+ * Características:
+ * - Manejo automático de cambios de red (Polygon Amoy)
+ * - Persistencia de sesión con localStorage
+ * - Mensajes de error claros y localizados
+ * - Sincronización automática con cambios de cuenta
+ */
 export const useMetaMask = () => {
-  const [account, setAccount] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const { address, isConnected, chain, isConnecting } = useAccount();
+  const { connect, connectors, isPending } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { switchChain } = useSwitchChain();
+  const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isNetworkValid, setIsNetworkValid] = useState(false);
 
-  // Verificar si MetaMask está instalado
-  const checkMetaMask = (): boolean => {
-    if (!window.ethereum) {
-      setError('MetaMask no está instalado. Por favor instálalo para usar esta aplicación.');
-      return false;
-    }
-    return true;
-  };
+  // Verificar si estamos en la red correcta
+  useEffect(() => {
+    if (isConnected && chain) {
+      const isCorrectChain = chain.id === polygonAmoy.id;
+      setIsNetworkValid(isCorrectChain);
 
-  // Función para asegurar que estamos en Polygon Amoy
-  const ensureCorrectNetwork = async (): Promise<boolean> => {
-    try {
-      const currentChainId = await window.ethereum.request({
-        method: 'eth_chainId'
-      });
-
-      // Polygon Amoy chain ID
-      const polygonAmoyChainId = '0x13882'; // 80002 en decimal
-      
-      if (currentChainId !== polygonAmoyChainId) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: polygonAmoyChainId }],
-          });
-          return true;
-        } catch (switchError: any) {
-          if (switchError.code === 4902) {
-            // Red no agregada, la agregamos
-            try {
-              await window.ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [
-                  {
-                    chainId: polygonAmoyChainId,
-                    chainName: 'Polygon Amoy Testnet',
-                    rpcUrls: ['https://rpc-amoy.polygon.technology'],
-                    blockExplorerUrls: ['https://amoy.polygonscan.com/'],
-                    nativeCurrency: {
-                      name: 'MATIC',
-                      symbol: 'MATIC', 
-                      decimals: 18,
-                    },
-                  },
-                ],
-              });
-              return true;
-            } catch (addError) {
-              console.error('Error agregando Polygon Amoy:', addError);
-              setError('Error configurando Polygon Amoy. Por favor agrégalo manualmente a MetaMask.');
-              return false;
-            }
-          }
-          console.error('Error cambiando a Polygon Amoy:', switchError);
-          setError('Por favor cambia manualmente a Polygon Amoy Testnet en MetaMask.');
-          return false;
-        }
+      if (!isCorrectChain) {
+        setError(
+          `Red incorrecta. Por favor cambia a Polygon Amoy (${polygonAmoy.name})`
+        );
+      } else {
+        setError(null);
       }
-      return true;
-    } catch (error) {
-      console.error('Error verificando red:', error);
-      return false;
     }
-  };
+  }, [isConnected, chain]);
 
   // Conectar wallet
   const connectWallet = async (): Promise<string | null> => {
     try {
-      setIsLoading(true);
       setError(null);
-      
-      if (!checkMetaMask()) {
-        setIsLoading(false);
+
+      // Encontrar MetaMask connector
+      const metamaskConnector = connectors.find(
+        (c) => c.name === 'MetaMask'
+      );
+
+      if (!metamaskConnector) {
+        const errorMsg =
+          'MetaMask no se encontró. Por favor instálalo para continuar.';
+        setError(errorMsg);
+        toast({
+          title: 'MetaMask no detectado',
+          description: errorMsg,
+          variant: 'destructive',
+        });
         return null;
       }
 
-      // Asegurar que estamos en Polygon Amoy
-      const networkOk = await ensureCorrectNetwork();
-      if (!networkOk) {
-        setIsLoading(false);
-        return null;
-      }
+      // Conectar
+      connect({ connector: metamaskConnector });
 
-      // Solicitar conexión de cuentas
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts',
+      return address || null;
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : 'Error desconocido al conectar';
+      setError(errorMsg);
+      toast({
+        title: 'Error de conexión',
+        description: errorMsg,
+        variant: 'destructive',
       });
-
-      if (accounts && accounts.length > 0) {
-        setAccount(accounts[0]);
-        setIsConnected(true);
-        
-        // Guardar en localStorage
-        localStorage.setItem('walletConnected', 'true');
-        localStorage.setItem('walletAddress', accounts[0]);
-        
-        setIsLoading(false);
-        return accounts[0];
-      }
-      
-      setIsLoading(false);
-      return null;
-    } catch (error) {
-      console.error('Error conectando wallet:', error);
-      setError('Error al conectar la wallet: ' + (error as any).message);
-      setIsLoading(false);
       return null;
     }
+  };
+
+  // Cambiar a la red correcta si es necesario
+  const ensureCorrectNetwork = async (): Promise<boolean> => {
+    if (!isConnected) return false;
+
+    if (chain?.id !== polygonAmoy.id) {
+      try {
+        switchChain({ chainId: polygonAmoy.id });
+        return true;
+      } catch (err) {
+        const errorMsg = 'No se pudo cambiar a Polygon Amoy. Intenta manualmente.';
+        setError(errorMsg);
+        toast({
+          title: 'Error de red',
+          description: errorMsg,
+          variant: 'destructive',
+        });
+        return false;
+      }
+    }
+
+    return true;
   };
 
   // Desconectar wallet
   const disconnectWallet = (): void => {
-    setAccount(null);
-    setIsConnected(false);
-    setError(null);
-    localStorage.removeItem('walletConnected');
-    localStorage.removeItem('walletAddress');
+    try {
+      disconnect();
+      setError(null);
+      setIsNetworkValid(false);
+      localStorage.removeItem('walletConnected');
+      localStorage.removeItem('walletAddress');
+      toast({
+        title: 'Desconectado',
+        description: 'Has cerrado sesión exitosamente',
+      });
+    } catch (err) {
+      const errorMsg = 'Error al desconectar';
+      setError(errorMsg);
+      toast({
+        title: 'Error',
+        description: errorMsg,
+        variant: 'destructive',
+      });
+    }
   };
 
   // Formatear dirección para mostrar
-  const formatAddress = (address: string | null): string => {
-    if (!address) return '';
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const formatAddress = (addr: string | undefined): string => {
+    if (!addr) return '';
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  // Verificar conexión existente al cargar
+  // Persistir sesión activa
   useEffect(() => {
-    const checkConnection = async () => {
-      if (checkMetaMask() && localStorage.getItem('walletConnected')) {
-        try {
-          const accounts = await window.ethereum.request({
-            method: 'eth_accounts',
-          });
-          
-          if (accounts && accounts.length > 0) {
-            setAccount(accounts[0]);
-            setIsConnected(true);
-          }
-        } catch (error) {
-          console.error('Error verificando conexión:', error);
-        }
-      }
-    };
-
-    checkConnection();
-
-    // Escuchar cambios de cuenta
-    if (window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (accounts && accounts.length > 0) {
-          setAccount(accounts[0]);
-        } else {
-          disconnectWallet();
-        }
-      };
-
-      const handleChainChanged = () => {
-        window.location.reload();
-      };
-
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
-
-      // Cleanup
-      return () => {
-        window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum?.removeListener('chainChanged', handleChainChanged);
-      };
+    if (isConnected && address) {
+      localStorage.setItem('walletConnected', 'true');
+      localStorage.setItem('walletAddress', address);
     }
-  }, []);
+  }, [isConnected, address]);
 
   return {
-    account,
-    isConnected,
+    account: address || null,
+    isConnected: isConnected && isNetworkValid,
     error,
-    isLoading,
+    isLoading: isPending || isConnecting,
     connectWallet,
     disconnectWallet,
+    ensureCorrectNetwork,
     formatAddress,
-    checkMetaMask
+    chain: chain?.name || null,
+    isNetworkValid,
   };
 };
-
-// Extender Window interface para TypeScript
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
