@@ -13,6 +13,8 @@ import { useMetaMask } from "@/hooks/useMetaMask";
 import QRGenerator from "@/components/QRGenerator";
 import { VARIETY_OPTIONS, getVarietyById } from "@/constants/mangoVarieties";
 import { useTranslation } from "@/config/i18n";
+import { saveBatchToDatabase, testSupabaseConnection } from "@/services/batchService";
+import type { BatchRecord } from "@/services/batchService";
 
 const Registrar = () => {
   const navigate = useNavigate();
@@ -55,38 +57,67 @@ const Registrar = () => {
 
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      // Generar hash de transacción simulado
       const mockHash = `0x${Math.random().toString(16).substring(2, 42)}`;
 
-      toast.success(
-        <div className="space-y-2 p-2">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <span className="font-bold text-lg">{i18n.registrar.registrationSuccess}</span>
-          </div>
-          <p className="text-sm text-slate-600">Transaction: {mockHash.slice(0, 20)}...</p>
-          <p className="text-sm text-slate-600">Variety: {varietyInfo.name}</p>
-        </div>
-      );
-
-      const lotes = JSON.parse(localStorage.getItem("lotes") || "[]");
-      const newLote = {
-        loteId: formData.loteId,
-        productor: formData.productor,
-        ubicacion: formData.ubicacion,
-        variedad: formData.variedad,
-        varietyName: varietyInfo.name,
-        calidad: formData.calidad,
-        hash: mockHash,
-        timestamp: new Date().toISOString(),
-        network: "Polygon Amoy",
+      // Preparar datos para guardar en Supabase
+      const batchData: BatchRecord = {
+        batch_id: formData.loteId,
+        producer_name: formData.productor,
+        location: formData.ubicacion,
+        variety: varietyInfo.name,
+        quality: formData.calidad,
+        transaction_hash: mockHash,
+        wallet_address: account || undefined,
+        metadata: {
+          varietyId: formData.variedad,
+          timestamp: new Date().toISOString(),
+          network: "Polygon Amoy",
+          emoji: varietyInfo.emoji,
+        },
       };
-      lotes.push(newLote);
-      localStorage.setItem("lotes", JSON.stringify(lotes));
+
+      // Guardar en Supabase
+      const supabaseResult = await saveBatchToDatabase(batchData);
+
+      if (supabaseResult.success) {
+        toast.success(
+          <div className="space-y-2 p-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span className="font-bold text-lg">{i18n.registrar.registrationSuccess}</span>
+            </div>
+            <p className="text-sm text-slate-600">Transaction: {mockHash.slice(0, 20)}...</p>
+            <p className="text-sm text-slate-600">Variety: {varietyInfo.name}</p>
+            <p className="text-xs text-green-600">✓ Guardado en BD</p>
+          </div>
+        );
+
+        // También guardar en localStorage como backup
+        const lotes = JSON.parse(localStorage.getItem("lotes") || "[]");
+        const newLote = {
+          loteId: formData.loteId,
+          productor: formData.productor,
+          ubicacion: formData.ubicacion,
+          variedad: formData.variedad,
+          varietyName: varietyInfo.name,
+          calidad: formData.calidad,
+          hash: mockHash,
+          timestamp: new Date().toISOString(),
+          network: "Polygon Amoy",
+        };
+        lotes.push(newLote);
+        localStorage.setItem("lotes", JSON.stringify(lotes));
+      }
 
       setIsLoading(false);
       setRegistrationSuccess(true);
-    }, 2000);
+    } catch (error) {
+      console.error("Error during registration:", error);
+      toast.error("Error al registrar el lote");
+      setIsLoading(false);
+    }
   };
 
   const handleTrackBatch = () => {
