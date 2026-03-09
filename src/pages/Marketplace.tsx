@@ -74,9 +74,9 @@ const Marketplace = () => {
   }, []);
 
   const fetchBatches = async () => {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("batches")
-      .select("*, profiles:producer_id(full_name, company_name, avatar_url, location)")
+      .select("*")
       .eq("is_listed", true)
       .order("created_at", { ascending: false });
 
