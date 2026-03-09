@@ -84,6 +84,15 @@ export const useMetaMask = () => {
         title: 'Error de conexión',
         description: errorMsg,
         variant: 'destructive',
+        duration: 15000,
+        action: (
+          <button
+            onClick={() => connectWallet()}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors"
+          >
+            Reintentar
+          </button>
+        ),
       });
       return null;
     }
