@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
 import { polygonAmoy } from 'wagmi/chains';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 /**
  * Hook personalizado para gestionar la conexión de wallet con Wagmi
@@ -34,9 +35,12 @@ export const useMetaMask = () => {
   }, [isConnected, chain]);
 
   // Conectar wallet (con reintentos seguros)
-  const connectWallet = async (): Promise<string | null> => {
+  const connectWallet = useCallback(async (): Promise<string | null> => {
     try {
       setError(null);
+
+      // Reset connector state to avoid "connector already connected" error
+      try { disconnect(); } catch {}
 
       const metamaskConnector =
         connectors.find((c) => c.id?.toLowerCase().includes('meta') || c.name?.toLowerCase().includes('metamask')) ||
@@ -53,6 +57,9 @@ export const useMetaMask = () => {
         });
         return null;
       }
+
+      // Small delay to let disconnect settle
+      await new Promise((r) => setTimeout(r, 200));
 
       const result = await connectAsync({ connector: metamaskConnector });
       const connectedAddress = result.accounts?.[0] || address || null;
@@ -75,7 +82,7 @@ export const useMetaMask = () => {
       return connectedAddress;
     } catch (err) {
       const raw = err instanceof Error ? err.message : 'Error desconocido al conectar';
-      const errorMsg = /rejected|denied|4001/i.test(raw)
+      const errorMsg = /rejected|denied|4001|already connect/i.test(raw)
         ? 'Conexión cancelada. Puedes intentar conectar de nuevo.'
         : raw;
 
@@ -84,19 +91,17 @@ export const useMetaMask = () => {
         title: 'Error de conexión',
         description: errorMsg,
         variant: 'destructive',
-        duration: 15000,
+        duration: 20000,
         action: (
-          <button
-            onClick={() => connectWallet()}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors"
-          >
-            Reintentar
-          </button>
+          <ToastAction altText="Reintentar conexión" onClick={() => connectWallet()}
+            className="inline-flex items-center gap-1.5 rounded-xl border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors whitespace-nowrap">
+            🔄 Reintentar
+          </ToastAction>
         ),
       });
       return null;
     }
-  };
+  }, [connectors, connectAsync, disconnect, switchChainAsync, address, toast]);
 
   // Cambiar a la red correcta si es necesario
   const ensureCorrectNetwork = async (): Promise<boolean> => {
