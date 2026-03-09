@@ -15,44 +15,30 @@ export interface BatchRecord {
 
 /**
  * Guarda un nuevo lote/batch en Supabase
+ * NOTE: The 'batches' table must be created first via migration
  */
 export const saveBatchToDatabase = async (batchData: BatchRecord) => {
   try {
-    // Verificar conexión a Supabase
-    const { data: connectionTest, error: connectionError } = await supabase
+    const { data, error } = await (supabase as any)
       .from("batches")
-      .select("count", { count: "exact" })
-      .limit(0);
-
-    if (connectionError && connectionError.code !== "PGRST116") {
-      console.warn("Supabase connection issue:", connectionError);
-    }
-
-    // Preparar datos para insertar
-    const dataToInsert = {
-      batch_id: batchData.batch_id,
-      producer_name: batchData.producer_name,
-      location: batchData.location,
-      variety: batchData.variety,
-      quality: batchData.quality,
-      transaction_hash: batchData.transaction_hash,
-      wallet_address: batchData.wallet_address || null,
-      metadata: batchData.metadata || {},
-    };
-
-    // Insertar en la tabla batches
-    const { data, error } = await supabase
-      .from("batches")
-      .insert([dataToInsert])
+      .insert([{
+        batch_id: batchData.batch_id,
+        producer_name: batchData.producer_name,
+        location: batchData.location,
+        variety: batchData.variety,
+        quality: batchData.quality,
+        transaction_hash: batchData.transaction_hash,
+        wallet_address: batchData.wallet_address || null,
+        metadata: batchData.metadata || {},
+      }])
       .select();
 
     if (error) {
-      console.error("Error saving batch to Supabase:", error);
+      console.error("Error saving batch:", error);
       toast.error(`Error guardando lote: ${error.message}`);
       return { success: false, error };
     }
 
-    console.log("Batch saved successfully:", data);
     toast.success("Lote guardado en la base de datos ✓");
     return { success: true, data };
   } catch (error) {
@@ -62,12 +48,9 @@ export const saveBatchToDatabase = async (batchData: BatchRecord) => {
   }
 };
 
-/**
- * Obtiene todos los batches registrados
- */
 export const getAllBatches = async () => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("batches")
       .select("*")
       .order("created_at", { ascending: false });
@@ -76,7 +59,6 @@ export const getAllBatches = async () => {
       console.error("Error fetching batches:", error);
       return { success: false, data: [] };
     }
-
     return { success: true, data: data || [] };
   } catch (error) {
     console.error("Exception fetching batches:", error);
@@ -84,12 +66,9 @@ export const getAllBatches = async () => {
   }
 };
 
-/**
- * Obtiene un batch específico por ID
- */
 export const getBatchById = async (batchId: string) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("batches")
       .select("*")
       .eq("batch_id", batchId)
@@ -99,7 +78,6 @@ export const getBatchById = async (batchId: string) => {
       console.error("Error fetching batch:", error);
       return { success: false, data: null };
     }
-
     return { success: true, data };
   } catch (error) {
     console.error("Exception fetching batch:", error);
@@ -107,24 +85,18 @@ export const getBatchById = async (batchId: string) => {
   }
 };
 
-/**
- * Verifica la conexión a Supabase
- */
 export const testSupabaseConnection = async () => {
   try {
-    const { data, error } = await supabase
+    const { error } = await (supabase as any)
       .from("batches")
       .select("count", { count: "exact" })
       .limit(0);
 
     if (error) {
-      console.error("Supabase connection error:", error);
       return { connected: false, error: error.message };
     }
-
-    return { connected: true, message: "Conectado a Supabase correctamente" };
+    return { connected: true, message: "Conectado correctamente" };
   } catch (error) {
-    console.error("Exception testing connection:", error);
     return { connected: false, error: String(error) };
   }
 };

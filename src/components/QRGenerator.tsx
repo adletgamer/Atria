@@ -208,9 +208,8 @@ const QRGenerator = ({
                         size={size}
                         level="H"
                         includeMargin={true}
-                        backgroundColor={bgColor}
+                        bgColor={bgColor}
                         fgColor={fgColor}
-                        quietZone={10}
                     />
                 </div>
 
