@@ -92,12 +92,12 @@ export const useMetaMask = () => {
         description: errorMsg,
         variant: 'destructive',
         duration: 20000,
-        action: ToastAction({
-          altText: 'Reintentar conexión',
-          onClick: () => { connectWallet(); },
-          className: 'inline-flex items-center gap-1.5 rounded-xl border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors whitespace-nowrap',
-          children: '🔄 Reintentar',
-        }),
+        action: (
+          <ToastAction altText="Reintentar conexión" onClick={() => connectWallet()}
+            className="inline-flex items-center gap-1.5 rounded-xl border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors whitespace-nowrap">
+            🔄 Reintentar
+          </ToastAction>
+        ),
       });
       return null;
     }
