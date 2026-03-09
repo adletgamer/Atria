@@ -156,14 +156,14 @@ const Registrar = () => {
 
     setIsLoading(true);
     try {
-      const mockHash = `0x${Math.random().toString(16).substring(2, 42)}`;
+      const refId = crypto.randomUUID();
       const batchData: BatchRecord = {
         batch_id: formData.loteId,
         producer_name: formData.productor,
         location: formData.ubicacion,
         variety: varietyInfo.name,
         quality: formData.calidad,
-        transaction_hash: mockHash,
+        transaction_hash: refId,
         wallet_address: account || undefined,
         total_kg: formData.totalKg ? parseFloat(formData.totalKg) : undefined,
         price_per_kg: formData.pricePerKg ? parseFloat(formData.pricePerKg) : undefined,
@@ -171,7 +171,7 @@ const Registrar = () => {
         metadata: {
           varietyId: formData.variedad,
           timestamp: new Date().toISOString(),
-          network: "Polygon Amoy",
+          network: "MangoChain Registry",
           emoji: varietyInfo.emoji,
         },
       };

@@ -9,6 +9,7 @@ import {
 import Timeline from "@/components/Timeline";
 import { useScanTracking } from "@/hooks/useScanTracking";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Verify = () => {
     const { batchId } = useParams<{ batchId: string }>();
@@ -27,74 +28,80 @@ const Verify = () => {
     const verifyBatch = async (id: string) => {
         setIsLoading(true);
 
-        // Simulate blockchain lookup
-        setTimeout(() => {
-            const lotes = JSON.parse(localStorage.getItem("lotes") || "[]");
-            const lote = lotes.find((l: any) => l.loteId === id);
+        try {
+            const { data, error } = await supabase
+                .from("batches")
+                .select("*")
+                .eq("batch_id", id)
+                .single();
 
-            if (lote) {
-                const timelineData = {
-                    loteId: lote.loteId,
-                    productor: lote.productor,
-                    ubicacion: lote.ubicacion,
-                    calidad: lote.calidad,
-                    hash: lote.hash,
-                    timestamp: lote.timestamp,
-                    network: lote.network,
-                    steps: [
-                        {
-                            id: "1",
-                            title: "Producer - Piura",
-                            description: `Registered by ${lote.productor}`,
-                            date: new Date(lote.timestamp).toLocaleDateString("en-US"),
-                            completed: true,
-                            icon: User,
-                        },
-                        {
-                            id: "2",
-                            title: "Exporter",
-                            description: "In export process",
-                            date: new Date(Date.now() + 86400000).toLocaleDateString("en-US"),
-                            completed: false,
-                            current: true,
-                            icon: Package,
-                        },
-                        {
-                            id: "3",
-                            title: "Supermarket - Lima",
-                            description: "In distribution",
-                            completed: false,
-                            icon: MapPin,
-                        },
-                        {
-                            id: "4",
-                            title: "Final Customer",
-                            description: "Delivered to consumer",
-                            completed: false,
-                            icon: CheckCircle,
-                        },
-                    ],
-                };
-
-                setLoteData(timelineData);
-                setNotFound(false);
-
-                // Log the scan event
-                logScan(id, true);
-
-                toast.success(
-                    <div className="flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                        <span className="font-semibold">Batch verified successfully!</span>
-                    </div>
-                );
-            } else {
+            if (error || !data) {
                 setNotFound(true);
                 logScan(id, false);
+                setIsLoading(false);
+                return;
             }
 
+            const timelineData = {
+                loteId: data.batch_id,
+                productor: data.producer_name,
+                ubicacion: data.location,
+                calidad: data.quality,
+                hash: data.transaction_hash,
+                timestamp: data.created_at,
+                variety: data.variety,
+                steps: [
+                    {
+                        id: "1",
+                        title: `Producer - ${data.location}`,
+                        description: `Registered by ${data.producer_name}`,
+                        date: new Date(data.created_at).toLocaleDateString("en-US"),
+                        completed: true,
+                        icon: User,
+                    },
+                    {
+                        id: "2",
+                        title: "Exporter",
+                        description: "In export process",
+                        date: new Date(Date.now() + 86400000).toLocaleDateString("en-US"),
+                        completed: data.status === "in_transit" || data.status === "delivered",
+                        current: data.status === "registered",
+                        icon: Package,
+                    },
+                    {
+                        id: "3",
+                        title: "Supermarket - Lima",
+                        description: "In distribution",
+                        completed: data.status === "delivered",
+                        icon: MapPin,
+                    },
+                    {
+                        id: "4",
+                        title: "Final Customer",
+                        description: "Delivered to consumer",
+                        completed: false,
+                        icon: CheckCircle,
+                    },
+                ],
+            };
+
+            setLoteData(timelineData);
+            setNotFound(false);
+            logScan(id, true);
+
+            toast.success(
+                <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="font-semibold">Batch verified successfully!</span>
+                </div>
+            );
+        } catch (err) {
+            console.error("Verification error:", err);
+            setNotFound(true);
+            logScan(id, false);
+        } finally {
             setIsLoading(false);
-        }, 1000);
+        }
     };
 
     if (isLoading) {
@@ -109,7 +116,7 @@ const Verify = () => {
                             Verifying Batch...
                         </h3>
                         <p className="text-slate-600 text-lg">
-                            Checking blockchain records
+                            Checking database records
                         </p>
                     </CardContent>
                 </Card>
@@ -129,7 +136,7 @@ const Verify = () => {
                             Batch Not Found
                         </h3>
                         <p className="text-red-700 text-lg mb-6">
-                            The batch ID "{batchId}" was not found on the blockchain.
+                            The batch ID "{batchId}" was not found in the system.
                         </p>
                         <Button
                             onClick={() => navigate("/rastrear")}
@@ -158,7 +165,7 @@ const Verify = () => {
                                 ✓ Verified Authentic
                             </h1>
                             <p className="text-green-700 font-semibold">
-                                Blockchain Verified Mango Batch
+                                Registered Mango Batch
                             </p>
                         </div>
                     </div>
@@ -231,19 +238,21 @@ const Verify = () => {
                             </div>
                         </div>
 
-                        {/* Blockchain Verification */}
-                        <div className="mt-6 p-5 bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-2xl">
-                            <div className="flex items-center gap-3 mb-3">
-                                <Shield className="h-6 w-6 text-emerald-600" />
-                                <span className="text-lg font-black text-emerald-900">Blockchain Verified</span>
+                        {/* Record Reference */}
+                        {loteData.hash && (
+                            <div className="mt-6 p-5 bg-gradient-to-br from-slate-50 to-gray-50 border-2 border-slate-200 rounded-2xl">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <Shield className="h-6 w-6 text-slate-600" />
+                                    <span className="text-lg font-black text-slate-900">Record Reference</span>
+                                </div>
+                                <p className="text-sm text-slate-700 font-mono break-all bg-white/60 p-3 rounded-xl border border-slate-200">
+                                    {loteData.hash}
+                                </p>
+                                <p className="text-slate-500 text-sm mt-3 font-medium">
+                                    📋 Internal tracking reference
+                                </p>
                             </div>
-                            <p className="text-sm text-emerald-700 font-mono break-all bg-white/60 p-3 rounded-xl border border-emerald-200">
-                                {loteData.hash}
-                            </p>
-                            <p className="text-emerald-700 text-sm mt-3 font-bold">
-                                🔒 Permanently recorded on {loteData.network}
-                            </p>
-                        </div>
+                        )}
                     </CardContent>
                 </Card>
 
