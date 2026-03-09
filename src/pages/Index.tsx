@@ -28,11 +28,11 @@ const content = {
     ],
     howTitle: "3 pasos simples",
     howLabel: "Cómo funciona",
-    howDesc: "Transforma tu cadena de suministro con tecnología blockchain fácilmente",
+    howDesc: "Transforma tu cadena de suministro con tecnología blockchain en minutos",
     steps: [
-      { title: "Registra tu Lote", description: "Ingresa los datos de tu cosecha y recibe un ID único en blockchain" },
-      { title: "Transfiere Propiedad", description: "Actualiza la titularidad al vender con historial inmutable permanente" },
-      { title: "Verifica Autenticidad", description: "Los compradores escanean el QR para ver todo el historial verificado" },
+      { title: "Registra tu Lote", description: "Ingresa los datos de tu cosecha y recibe un ID único en blockchain", detail: "Variedad, calidad, ubicación y peso" },
+      { title: "Transfiere Propiedad", description: "Actualiza la titularidad al vender con historial inmutable", detail: "Productor → Exportador → Consumidor" },
+      { title: "Verifica Autenticidad", description: "Los compradores escanean el QR para ver el historial verificado", detail: "Código QR + Hash de transacción" },
     ],
     valueLabel: "Propuesta de valor",
     valueTitle: "Valor para todos",
@@ -66,11 +66,11 @@ const content = {
     ],
     howTitle: "3 Simple Steps",
     howLabel: "How it works",
-    howDesc: "Transform your supply chain with blockchain technology easily",
+    howDesc: "Transform your supply chain with blockchain technology in minutes",
     steps: [
-      { title: "Register Your Batch", description: "Enter your harvest data and receive a unique blockchain ID" },
-      { title: "Transfer Ownership", description: "Update ownership when selling with permanent, immutable history" },
-      { title: "Verify Authenticity", description: "Buyers scan QR code to view entire verified history" },
+      { title: "Register Your Batch", description: "Enter your harvest data and receive a unique blockchain ID", detail: "Variety, quality, location & weight" },
+      { title: "Transfer Ownership", description: "Update ownership when selling with immutable history", detail: "Producer → Exporter → Consumer" },
+      { title: "Verify Authenticity", description: "Buyers scan QR code to view verified history", detail: "QR Code + Transaction Hash" },
     ],
     valueLabel: "Value proposition",
     valueTitle: "Value for Everyone",
@@ -96,6 +96,7 @@ const content = {
 
 const featureIcons = [Shield, Package, Search, Truck];
 const stepIcons = [FileText, RefreshCw, CheckCircle];
+const stepColors = ["bg-gradient-mango", "bg-gradient-earth", "bg-primary"];
 
 const Index = () => {
   const { lang } = useLanguage();
@@ -159,36 +160,66 @@ const Index = () => {
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
       </section>
 
-      {/* How It Works */}
-      <section className="py-24 sm:py-32">
-        <div className="container mx-auto px-4">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} className="text-center mb-20">
-            <motion.p custom={0} variants={fadeUp} className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">{t.howLabel}</motion.p>
+      {/* How It Works - Premium Redesign */}
+      <section className="py-24 sm:py-32 relative overflow-hidden">
+        {/* Subtle background pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(hsl(var(--primary)) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+
+        <div className="container mx-auto px-4 relative">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} className="text-center mb-16">
+            <motion.div custom={0} variants={fadeUp} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-5">
+              <Zap className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-bold uppercase tracking-widest text-primary">{t.howLabel}</span>
+            </motion.div>
             <motion.h2 custom={1} variants={fadeUp} className="text-3xl sm:text-5xl font-extrabold text-foreground font-display mb-4">{t.howTitle}</motion.h2>
             <motion.p custom={2} variants={fadeUp} className="text-lg text-muted-foreground max-w-xl mx-auto">{t.howDesc}</motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {t.steps.map((step, index) => {
-              const Icon = stepIcons[index];
-              return (
-                <motion.div key={step.title} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={index} variants={fadeUp} className="relative group">
-                  {index < t.steps.length - 1 && (
-                    <div className="hidden md:block absolute top-14 left-[60%] w-[80%] h-[2px] bg-gradient-to-r from-border to-transparent z-0" />
-                  )}
-                  <div className="relative z-10 bg-card rounded-3xl p-8 shadow-card border border-border hover:shadow-elevated hover:-translate-y-1 transition-all duration-500">
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="w-14 h-14 bg-gradient-mango rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500">
-                        <Icon className="h-7 w-7 text-primary-foreground" />
+          {/* Steps with connecting line */}
+          <div className="max-w-5xl mx-auto relative">
+            {/* Horizontal connector - desktop */}
+            <div className="hidden md:block absolute top-[4.5rem] left-[16%] right-[16%] h-[3px] z-0">
+              <div className="w-full h-full bg-border rounded-full" />
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: "100%" }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
+                className="absolute top-0 left-0 h-full bg-gradient-mango rounded-full"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+              {t.steps.map((step, index) => {
+                const Icon = stepIcons[index];
+                return (
+                  <motion.div key={step.title} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={index + 1} variants={fadeUp}
+                    className="relative group flex flex-col items-center text-center">
+                    {/* Step Number + Icon */}
+                    <div className="relative mb-8">
+                      <motion.div
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        className={`w-[5.5rem] h-[5.5rem] ${stepColors[index]} rounded-3xl flex items-center justify-center shadow-elevated relative`}>
+                        <Icon className="h-9 w-9 text-primary-foreground" />
+                      </motion.div>
+                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-card border-2 border-border rounded-xl flex items-center justify-center shadow-sm">
+                        <span className="text-sm font-extrabold text-foreground font-display">{index + 1}</span>
                       </div>
-                      <span className="text-4xl font-extrabold text-muted-foreground/20 font-display">{String(index + 1).padStart(2, "0")}</span>
                     </div>
-                    <h3 className="text-xl font-bold text-card-foreground mb-3 font-display">{step.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed">{step.description}</p>
-                  </div>
-                </motion.div>
-              );
-            })}
+
+                    {/* Content Card */}
+                    <div className="bg-card rounded-3xl p-8 shadow-card border border-border hover:shadow-elevated hover:-translate-y-2 transition-all duration-500 w-full">
+                      <h3 className="text-xl font-bold text-card-foreground mb-3 font-display">{step.title}</h3>
+                      <p className="text-muted-foreground leading-relaxed mb-4">{step.description}</p>
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border">
+                        <div className={`w-2 h-2 rounded-full ${stepColors[index]}`} />
+                        <span className="text-xs font-semibold text-muted-foreground">{step.detail}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
