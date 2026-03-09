@@ -137,7 +137,7 @@ const Rastrear = () => {
     const { data } = await supabase.from("batches").select("*").eq("batch_id", searchValue).maybeSingle();
 
     // Fallback to localStorage then demo
-    let result = data;
+    let result: any = data;
     if (!result) {
       const local = JSON.parse(localStorage.getItem("lotes") || "[]");
       result = local.find((l: any) => l.loteId === searchValue || l.batch_id === searchValue);
@@ -148,18 +148,21 @@ const Rastrear = () => {
 
     setTimeout(() => {
       if (result) {
+        const batchId = result.batch_id || result.loteId;
+        const producerName = result.producer_name || result.productor;
+        const createdDate = result.created_at || result.timestamp;
         const activeStep = statusToStep[result.status] ?? 0;
         setLoteData({
           ...result,
-          batch_id: result.batch_id || result.loteId,
-          producer_name: result.producer_name || result.productor,
+          batch_id: batchId,
+          producer_name: producerName,
           steps: i.steps.map((step, idx) => ({
             ...step,
-            description: idx === 0 ? `${step.descTpl || step.desc} ${result.producer_name || result.productor}` : step.desc,
+            description: idx === 0 ? `${step.descTpl || step.desc} ${producerName}` : step.desc,
             completed: idx <= activeStep,
             current: idx === activeStep,
             date: idx === 0
-              ? new Date(result.created_at || result.timestamp).toLocaleDateString(lang === "es" ? "es-PE" : "en-US", { month: "short", day: "numeric" })
+              ? new Date(createdDate).toLocaleDateString(lang === "es" ? "es-PE" : "en-US", { month: "short", day: "numeric" })
               : idx <= activeStep
                 ? new Date(Date.now() + idx * 86400000 * 3).toLocaleDateString(lang === "es" ? "es-PE" : "en-US", { month: "short", day: "numeric" })
                 : undefined,
