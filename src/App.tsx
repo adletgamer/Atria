@@ -8,10 +8,15 @@ import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import wagmiConfig from "@/config/wagmi";
 import { queryClient } from "@/config/queryClient";
 import { LanguageProvider } from "@/hooks/useLanguage";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Registrar from "./pages/Registrar";
 import Rastrear from "./pages/Rastrear";
 import Dashboard from "./pages/Dashboard";
+import Marketplace from "./pages/Marketplace";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ResetPassword from "./pages/ResetPassword";
 import Verify from "./pages/Verify";
 import QRTest from "./pages/QRTest";
 import NotFound from "./pages/NotFound";
@@ -20,23 +25,29 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <WagmiProvider config={wagmiConfig}>
       <RainbowKitProvider>
-        <LanguageProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/registrar" element={<Registrar />} />
-                <Route path="/rastrear" element={<Rastrear />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/verify/:batchId" element={<Verify />} />
-                <Route path="/qr-test" element={<QRTest />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </LanguageProvider>
+        <AuthProvider>
+          <LanguageProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/registrar" element={<Registrar />} />
+                  <Route path="/rastrear" element={<Rastrear />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/verify/:batchId" element={<Verify />} />
+                  <Route path="/qr-test" element={<QRTest />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </LanguageProvider>
+        </AuthProvider>
       </RainbowKitProvider>
     </WagmiProvider>
   </QueryClientProvider>
