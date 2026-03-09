@@ -96,7 +96,6 @@ const content = {
 
 const featureIcons = [Shield, Package, Search, Truck];
 const stepIcons = [FileText, RefreshCw, CheckCircle];
-const stepColors = ["bg-gradient-mango", "bg-gradient-earth", "bg-primary"];
 
 const Index = () => {
   const { lang } = useLanguage();
