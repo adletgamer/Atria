@@ -175,51 +175,35 @@ const Index = () => {
             <motion.p custom={2} variants={fadeUp} className="text-lg text-muted-foreground max-w-xl mx-auto">{t.howDesc}</motion.p>
           </motion.div>
 
-          {/* Steps with connecting line */}
-          <div className="max-w-5xl mx-auto relative">
-            {/* Horizontal connector - desktop */}
-            <div className="hidden md:block absolute top-[4.5rem] left-[16%] right-[16%] h-[3px] z-0">
-              <div className="w-full h-full bg-border rounded-full" />
-              <motion.div
-                initial={{ width: 0 }}
-                whileInView={{ width: "100%" }}
-                viewport={{ once: true }}
-                transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
-                className="absolute top-0 left-0 h-full bg-gradient-mango rounded-full"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
-              {t.steps.map((step, index) => {
-                const Icon = stepIcons[index];
-                return (
-                  <motion.div key={step.title} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={index + 1} variants={fadeUp}
-                    className="relative group flex flex-col items-center text-center">
-                    {/* Step Number + Icon */}
-                    <div className="relative mb-8">
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        className={`w-[5.5rem] h-[5.5rem] ${stepColors[index]} rounded-3xl flex items-center justify-center shadow-elevated relative`}>
-                        <Icon className="h-9 w-9 text-primary-foreground" />
-                      </motion.div>
-                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-card border-2 border-border rounded-xl flex items-center justify-center shadow-sm">
-                        <span className="text-sm font-extrabold text-foreground font-display">{index + 1}</span>
-                      </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {t.steps.map((step, index) => {
+              const Icon = stepIcons[index];
+              return (
+                <motion.div key={step.title} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={index + 1} variants={fadeUp}
+                  className="group flex flex-col items-center text-center">
+                  {/* Icon */}
+                  <div className="relative mb-8">
+                    <motion.div whileHover={{ scale: 1.08 }}
+                      className="w-20 h-20 bg-gradient-mango rounded-2xl flex items-center justify-center shadow-elevated">
+                      <Icon className="h-9 w-9 text-primary-foreground" />
+                    </motion.div>
+                    <div className="absolute -top-2 -right-2 w-7 h-7 bg-card border-2 border-border rounded-lg flex items-center justify-center shadow-sm">
+                      <span className="text-xs font-extrabold text-foreground font-display">{index + 1}</span>
                     </div>
+                  </div>
 
-                    {/* Content Card */}
-                    <div className="bg-card rounded-3xl p-8 shadow-card border border-border hover:shadow-elevated hover:-translate-y-2 transition-all duration-500 w-full">
-                      <h3 className="text-xl font-bold text-card-foreground mb-3 font-display">{step.title}</h3>
-                      <p className="text-muted-foreground leading-relaxed mb-4">{step.description}</p>
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border">
-                        <div className={`w-2 h-2 rounded-full ${stepColors[index]}`} />
-                        <span className="text-xs font-semibold text-muted-foreground">{step.detail}</span>
-                      </div>
+                  {/* Card */}
+                  <div className="bg-card rounded-3xl p-8 shadow-card border border-border hover:shadow-elevated hover:-translate-y-1 transition-all duration-500 w-full">
+                    <h3 className="text-xl font-bold text-card-foreground mb-3 font-display">{step.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed mb-4">{step.description}</p>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border">
+                      <div className="w-2 h-2 rounded-full bg-gradient-mango" />
+                      <span className="text-xs font-semibold text-muted-foreground">{step.detail}</span>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
