@@ -92,14 +92,12 @@ export const useMetaMask = () => {
         description: errorMsg,
         variant: 'destructive',
         duration: 20000,
-        action: createElement(
-          'button',
-          {
-            onClick: () => { connectWallet(); },
-            className: 'inline-flex items-center gap-1.5 rounded-xl bg-destructive-foreground/10 border border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors whitespace-nowrap',
-          },
-          '🔄 Reintentar'
-        ) as unknown as ReactNode,
+        action: ToastAction({
+          altText: 'Reintentar conexión',
+          onClick: () => { connectWallet(); },
+          className: 'inline-flex items-center gap-1.5 rounded-xl border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors whitespace-nowrap',
+          children: '🔄 Reintentar',
+        }),
       });
       return null;
     }
