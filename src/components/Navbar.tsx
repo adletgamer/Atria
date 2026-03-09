@@ -1,9 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Wallet, LogOut, AlertCircle, Globe } from "lucide-react";
+import { Menu, X, Wallet, LogOut, AlertCircle, Globe, ShoppingCart, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useMetaMask } from "@/hooks/useMetaMask";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.png";
 import {
   DropdownMenu,
@@ -15,11 +16,13 @@ import {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { account, isConnected, isLoading, error, connectWallet, disconnectWallet, formatAddress, chain, isNetworkValid } = useMetaMask();
+  const { account, isConnected: walletConnected, isLoading, error, connectWallet, disconnectWallet, formatAddress, chain, isNetworkValid } = useMetaMask();
   const { lang, toggle } = useLanguage();
+  const { user, signOut } = useAuth();
 
   const navItems = [
     { path: "/", label: lang === "es" ? "Inicio" : "Home" },
+    { path: "/marketplace", label: lang === "es" ? "Mercado" : "Market" },
     { path: "/registrar", label: lang === "es" ? "Registrar" : "Register" },
     { path: "/rastrear", label: lang === "es" ? "Rastrear" : "Track" },
     { path: "/dashboard", label: "Dashboard" },
