@@ -14,16 +14,185 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      batches: {
+        Row: {
+          batch_id: string
+          created_at: string
+          id: string
+          is_listed: boolean
+          location: string
+          metadata: Json | null
+          price_per_kg: number | null
+          producer_id: string | null
+          producer_name: string
+          quality: string
+          status: string
+          total_kg: number | null
+          transaction_hash: string | null
+          updated_at: string
+          variety: string
+          wallet_address: string | null
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          id?: string
+          is_listed?: boolean
+          location?: string
+          metadata?: Json | null
+          price_per_kg?: number | null
+          producer_id?: string | null
+          producer_name: string
+          quality: string
+          status?: string
+          total_kg?: number | null
+          transaction_hash?: string | null
+          updated_at?: string
+          variety: string
+          wallet_address?: string | null
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          id?: string
+          is_listed?: boolean
+          location?: string
+          metadata?: Json | null
+          price_per_kg?: number | null
+          producer_id?: string | null
+          producer_name?: string
+          quality?: string
+          status?: string
+          total_kg?: number | null
+          transaction_hash?: string | null
+          updated_at?: string
+          variety?: string
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          batch_id: string
+          buyer_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          price_per_kg: number
+          quantity_kg: number
+          seller_id: string
+          status: string
+          total_price: number
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          buyer_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          price_per_kg: number
+          quantity_kg: number
+          seller_id: string
+          status?: string
+          total_price: number
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          price_per_kg?: number
+          quantity_kg?: number
+          seller_id?: string
+          status?: string
+          total_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          company_name: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          location: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          location?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          location?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "agricultor" | "exportador"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +319,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["agricultor", "exportador"],
+    },
   },
 } as const
