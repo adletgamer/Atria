@@ -1,93 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 142 70% 15%;
+    --background: 40 20% 98%;
+    --foreground: 30 10% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 142 70% 15%;
+    --card-foreground: 30 10% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 142 70% 15%;
+    --popover-foreground: 30 10% 12%;
 
-    --primary: 142 76% 36%;
+    --primary: 25 95% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 24 95% 53%;
+    --secondary: 145 60% 32%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 45 20% 96%;
-    --muted-foreground: 142 20% 40%;
+    --muted: 35 15% 94%;
+    --muted-foreground: 30 10% 45%;
 
-    --accent: 45 95% 60%;
-    --accent-foreground: 142 70% 15%;
+    --accent: 42 100% 55%;
+    --accent-foreground: 30 10% 12%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 142 20% 85%;
-    --input: 142 20% 90%;
-    --ring: 142 76% 36%;
+    --border: 35 15% 88%;
+    --input: 35 15% 90%;
+    --ring: 25 95% 50%;
 
     --radius: 0.75rem;
-    
-    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(24 95% 53%));
-    --gradient-hero: linear-gradient(135deg, hsl(142 76% 36% / 0.95), hsl(24 95% 53% / 0.95));
-    --shadow-soft: 0 4px 20px -2px hsl(142 76% 36% / 0.15);
-    --shadow-glow: 0 0 30px hsl(24 95% 53% / 0.3);
+
+    --gradient-hero: linear-gradient(160deg, hsla(30, 10%, 8%, 0.82), hsla(25, 60%, 15%, 0.75));
+    --gradient-mango: linear-gradient(135deg, hsl(25, 95%, 50%), hsl(42, 100%, 55%));
+    --gradient-earth: linear-gradient(135deg, hsl(145, 60%, 32%), hsl(160, 50%, 40%));
+    --shadow-elevated: 0 20px 60px -15px hsla(25, 60%, 30%, 0.18);
+    --shadow-card: 0 2px 16px -2px hsla(30, 10%, 12%, 0.06);
+    --shadow-glow-mango: 0 0 40px hsla(25, 95%, 50%, 0.2);
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 142 40% 8%;
-    --foreground: 142 20% 95%;
-
-    --card: 142 35% 12%;
-    --card-foreground: 142 20% 95%;
-
-    --popover: 142 35% 12%;
-    --popover-foreground: 142 20% 95%;
-
-    --primary: 142 76% 36%;
+    --background: 30 15% 6%;
+    --foreground: 35 15% 92%;
+    --card: 30 15% 10%;
+    --card-foreground: 35 15% 92%;
+    --popover: 30 15% 10%;
+    --popover-foreground: 35 15% 92%;
+    --primary: 25 95% 50%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 24 95% 53%;
+    --secondary: 145 60% 32%;
     --secondary-foreground: 0 0% 100%;
-
-    --muted: 142 30% 20%;
-    --muted-foreground: 142 20% 70%;
-
-    --accent: 45 95% 60%;
-    --accent-foreground: 142 70% 15%;
-
+    --muted: 30 15% 18%;
+    --muted-foreground: 35 15% 65%;
+    --accent: 42 100% 55%;
+    --accent-foreground: 30 10% 12%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 142 30% 20%;
-    --input: 142 30% 20%;
-    --ring: 142 76% 50%;
+    --border: 30 15% 20%;
+    --input: 30 15% 20%;
+    --ring: 25 95% 55%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -105,6 +90,59 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Sora', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Sora', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-gradient-mango {
+    background: var(--gradient-mango);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-earth {
+    background: var(--gradient-earth);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-mango {
+    background: var(--gradient-mango);
+  }
+
+  .bg-gradient-earth {
+    background: var(--gradient-earth);
+  }
+
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .glass {
+    backdrop-filter: blur(16px) saturate(180%);
+    background: hsla(0, 0%, 100%, 0.72);
+    border: 1px solid hsla(35, 15%, 88%, 0.5);
+  }
+
+  .glass-dark {
+    backdrop-filter: blur(16px) saturate(180%);
+    background: hsla(30, 10%, 8%, 0.65);
+    border: 1px solid hsla(0, 0%, 100%, 0.08);
   }
 }
