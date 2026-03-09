@@ -6,18 +6,12 @@ import { useToast } from '@/components/ui/use-toast';
 /**
  * Hook personalizado para gestionar la conexión de wallet con Wagmi
  * Proporciona una interfaz simplificada sobre los hooks de Wagmi
- * 
- * Características:
- * - Manejo automático de cambios de red (Polygon Amoy)
- * - Persistencia de sesión con localStorage
- * - Mensajes de error claros y localizados
- * - Sincronización automática con cambios de cuenta
  */
 export const useMetaMask = () => {
   const { address, isConnected, chain, isConnecting } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
+  const { connectAsync, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
-  const { switchChain } = useSwitchChain();
+  const { switchChainAsync } = useSwitchChain();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
   const [isNetworkValid, setIsNetworkValid] = useState(false);
@@ -29,28 +23,28 @@ export const useMetaMask = () => {
       setIsNetworkValid(isCorrectChain);
 
       if (!isCorrectChain) {
-        setError(
-          `Red incorrecta. Por favor cambia a Polygon Amoy (${polygonAmoy.name})`
-        );
+        setError(`Red incorrecta. Por favor cambia a Polygon Amoy (${polygonAmoy.name})`);
       } else {
         setError(null);
       }
+      return;
     }
+
+    setIsNetworkValid(false);
   }, [isConnected, chain]);
 
-  // Conectar wallet
+  // Conectar wallet (con reintentos seguros)
   const connectWallet = async (): Promise<string | null> => {
     try {
       setError(null);
 
-      // Encontrar MetaMask connector
-      const metamaskConnector = connectors.find(
-        (c) => c.name === 'MetaMask'
-      );
+      const metamaskConnector =
+        connectors.find((c) => c.id?.toLowerCase().includes('meta') || c.name?.toLowerCase().includes('metamask')) ||
+        connectors.find((c) => c.id?.toLowerCase().includes('injected')) ||
+        connectors[0];
 
       if (!metamaskConnector) {
-        const errorMsg =
-          'MetaMask no se encontró. Por favor instálalo para continuar.';
+        const errorMsg = 'MetaMask no se encontró. Por favor instálalo para continuar.';
         setError(errorMsg);
         toast({
           title: 'MetaMask no detectado',
@@ -60,13 +54,31 @@ export const useMetaMask = () => {
         return null;
       }
 
-      // Conectar
-      connect({ connector: metamaskConnector });
+      const result = await connectAsync({ connector: metamaskConnector });
+      const connectedAddress = result.accounts?.[0] || address || null;
 
-      return address || null;
+      // Intentar cambiar red automáticamente si es necesario
+      if (result.chainId !== polygonAmoy.id) {
+        try {
+          await switchChainAsync({ chainId: polygonAmoy.id });
+        } catch {
+          const errorMsg = 'Wallet conectada, pero en red incorrecta. Cambia a Polygon Amoy.';
+          setError(errorMsg);
+          toast({
+            title: 'Red incorrecta',
+            description: errorMsg,
+            variant: 'destructive',
+          });
+        }
+      }
+
+      return connectedAddress;
     } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : 'Error desconocido al conectar';
+      const raw = err instanceof Error ? err.message : 'Error desconocido al conectar';
+      const errorMsg = /rejected|denied|4001/i.test(raw)
+        ? 'Conexión cancelada. Puedes intentar conectar de nuevo.'
+        : raw;
+
       setError(errorMsg);
       toast({
         title: 'Error de conexión',
@@ -83,9 +95,9 @@ export const useMetaMask = () => {
 
     if (chain?.id !== polygonAmoy.id) {
       try {
-        switchChain({ chainId: polygonAmoy.id });
+        await switchChainAsync({ chainId: polygonAmoy.id });
         return true;
-      } catch (err) {
+      } catch {
         const errorMsg = 'No se pudo cambiar a Polygon Amoy. Intenta manualmente.';
         setError(errorMsg);
         toast({
@@ -112,7 +124,7 @@ export const useMetaMask = () => {
         title: 'Desconectado',
         description: 'Has cerrado sesión exitosamente',
       });
-    } catch (err) {
+    } catch {
       const errorMsg = 'Error al desconectar';
       setError(errorMsg);
       toast({
