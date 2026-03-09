@@ -1,435 +1,357 @@
-import Navbar from "@/components/Navbar";
-import StatsCard from "@/components/StatsCard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Package, TrendingUp, Users, MapPin, Calendar, ArrowUpRight, Eye, Zap, Shield, Cpu, BarChart3, Database } from "lucide-react";
-import peruMap from "@/assets/peru-map.png";
-import { useMetaMask } from "@/hooks/useMetaMask";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import Navbar from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
+import {
+  Package, TrendingUp, Users, MapPin, ArrowUpRight, Eye,
+  Shield, BarChart3, Calendar, Leaf, DollarSign, Award,
+} from "lucide-react";
+import peruMap from "@/assets/peru-map.png";
 
-interface Lote {
-  id: string;
-  productor: string;
-  ubicacion: string;
-  calidad: string;
-  fecha: string;
-  hash?: string;
-  status?: string;
-}
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.5, ease: "easeOut" as const } }),
+};
+
+const txt = {
+  es: {
+    label: "Panel de Control",
+    title: "Dashboard",
+    subtitle: "Monitoreo en tiempo real de tu cadena de suministro",
+    batches: "Lotes Registrados",
+    batchesDesc: "Total en blockchain",
+    producers: "Productores Activos",
+    producersDesc: "Agricultores verificados",
+    orders: "Órdenes",
+    ordersDesc: "En el marketplace",
+    regions: "Regiones",
+    regionsDesc: "Zonas activas",
+    registerNew: "Registrar Nuevo Lote",
+    trackBatches: "Rastrear Lotes",
+    marketplace: "Ir al Marketplace",
+    recentTitle: "Lotes Recientes",
+    recentDesc: "Últimos registros en la plataforma",
+    mapTitle: "Mapa de Producción",
+    mapDesc: "Principales regiones productoras de mango en Perú",
+    qualityTitle: "Distribución de Calidad",
+    qualityDesc: "Porcentaje de lotes por grado",
+    networkTitle: "Estado de Red",
+    networkDesc: "Información de Polygon Amoy Testnet",
+    noBatches: "Sin lotes registrados",
+    noBatchesDesc: "Comienza registrando tu primer lote",
+    registerFirst: "Registrar Primer Lote",
+    viewAll: "Ver Todos",
+    highProd: "Alta Producción",
+    medProd: "Media Producción",
+    premium: "Premium",
+    export: "Exportación",
+    first: "Primera",
+    second: "Segunda",
+    welcome: "Bienvenido",
+  },
+  en: {
+    label: "Control Panel",
+    title: "Dashboard",
+    subtitle: "Real-time monitoring of your supply chain",
+    batches: "Registered Batches",
+    batchesDesc: "Total on blockchain",
+    producers: "Active Producers",
+    producersDesc: "Verified farmers",
+    orders: "Orders",
+    ordersDesc: "In the marketplace",
+    regions: "Regions",
+    regionsDesc: "Active zones",
+    registerNew: "Register New Batch",
+    trackBatches: "Track Batches",
+    marketplace: "Go to Marketplace",
+    recentTitle: "Recent Batches",
+    recentDesc: "Latest platform registrations",
+    mapTitle: "Production Map",
+    mapDesc: "Main mango producing regions in Peru",
+    qualityTitle: "Quality Distribution",
+    qualityDesc: "Batch percentage by quality grade",
+    networkTitle: "Network Status",
+    networkDesc: "Polygon Amoy Testnet Information",
+    noBatches: "No batches registered",
+    noBatchesDesc: "Start by registering your first batch",
+    registerFirst: "Register First Batch",
+    viewAll: "View All",
+    highProd: "High Production",
+    medProd: "Medium Production",
+    premium: "Premium",
+    export: "Export",
+    first: "First Grade",
+    second: "Second Grade",
+    welcome: "Welcome",
+  },
+};
+
+const DEMO_BATCHES = [
+  { batch_id: "MG-2025-001", producer_name: "Juan García", location: "Piura", variety: "Kent", quality: "Premium", status: "registered", total_kg: 500, price_per_kg: 2.80, created_at: "2025-12-01T10:00:00Z" },
+  { batch_id: "MG-2025-002", producer_name: "María López", location: "Lambayeque", variety: "Tommy Atkins", quality: "Exportación", status: "in_transit", total_kg: 300, price_per_kg: 2.50, created_at: "2025-12-05T14:00:00Z" },
+  { batch_id: "MG-2025-003", producer_name: "Carlos Ruiz", location: "Piura", variety: "Haden", quality: "Premium", status: "delivered", total_kg: 750, price_per_kg: 3.20, created_at: "2025-12-08T09:00:00Z" },
+  { batch_id: "MG-2025-004", producer_name: "Ana Torres", location: "Ica", variety: "Edward", quality: "Primera", status: "registered", total_kg: 200, price_per_kg: 2.00, created_at: "2025-12-10T16:00:00Z" },
+];
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { isConnected, account, formatAddress } = useMetaMask();
-  const [lotes, setLotes] = useState<Lote[]>([]);
-  const [stats, setStats] = useState({
-    totalLotes: 0,
-    productoresActivos: 0,
-    transacciones: 0,
-    ubicaciones: 0
-  });
+  const { user, profile } = useAuth();
+  const { lang } = useLanguage();
+  const i = txt[lang];
 
-  // Cargar datos reales desde localStorage
+  const [batches, setBatches] = useState<any[]>([]);
+  const [stats, setStats] = useState({ totalBatches: 0, producers: 0, orders: 0, regions: 0 });
+
   useEffect(() => {
-    const cargarDatos = () => {
-      const lotesGuardados = JSON.parse(localStorage.getItem("lotes") || "[]");
-      setLotes(lotesGuardados.slice(-4).reverse()); // Últimos 4 lotes, más recientes primero
+    const load = async () => {
+      const { data } = await supabase.from("batches").select("*").order("created_at", { ascending: false }).limit(6);
+      const realBatches = data && data.length > 0 ? data : DEMO_BATCHES;
+      setBatches(realBatches);
 
-      // Calcular estadísticas reales
-      const productoresUnicos = new Set(lotesGuardados.map((lote: Lote) => lote.productor));
-      const ubicacionesUnicas = new Set(lotesGuardados.map((lote: Lote) => lote.ubicacion));
+      const producers = new Set(realBatches.map((b: any) => b.producer_name));
+      const regions = new Set(realBatches.map((b: any) => b.location));
+      const { count } = await supabase.from("orders").select("*", { count: "exact", head: true });
 
       setStats({
-        totalLotes: lotesGuardados.length,
-        productoresActivos: productoresUnicos.size,
-        transacciones: lotesGuardados.length * 2, // Simulación de transacciones
-        ubicaciones: ubicacionesUnicas.size
+        totalBatches: realBatches.length,
+        producers: producers.size,
+        orders: count || 0,
+        regions: regions.size,
       });
     };
-
-    cargarDatos();
-
-    // Escuchar cambios en localStorage
-    const handleStorageChange = () => cargarDatos();
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => window.removeEventListener('storage', handleStorageChange);
+    load();
   }, []);
 
+  const qualityDistribution = (() => {
+    const counts: Record<string, number> = {};
+    batches.forEach((b) => { counts[b.quality] = (counts[b.quality] || 0) + 1; });
+    const total = batches.length || 1;
+    return Object.entries(counts).map(([label, count]) => ({
+      label,
+      percentage: Math.round((count / total) * 100),
+    }));
+  })();
+
+  const qualityColors: Record<string, string> = {
+    Premium: "bg-secondary",
+    Exportación: "bg-primary",
+    Primera: "bg-accent",
+    Segunda: "bg-muted-foreground",
+  };
+
+  const statusColors: Record<string, string> = {
+    registered: "bg-primary/15 text-primary",
+    in_transit: "bg-accent/15 text-accent-foreground",
+    delivered: "bg-secondary/15 text-secondary",
+  };
+
   const statsData = [
-    {
-      title: "Registered Batches",
-      value: stats.totalLotes.toString(),
-      description: "Total batches on blockchain",
-      icon: Package,
-      trend: { value: "+12%", isPositive: true },
-      color: "from-blue-500 to-cyan-500",
-      bgColor: "bg-gradient-to-br from-blue-50 to-cyan-50",
-      borderColor: "border-blue-200"
-    },
-    {
-      title: "Active Producers",
-      value: stats.productoresActivos.toString(),
-      description: "Verified farmers",
-      icon: Users,
-      trend: { value: "+8%", isPositive: true },
-      color: "from-green-500 to-emerald-500",
-      bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
-      borderColor: "border-green-200"
-    },
-    {
-      title: "Transactions",
-      value: stats.transacciones.toString(),
-      description: "On Polygon Amoy this month",
-      icon: TrendingUp,
-      trend: { value: "+23%", isPositive: true },
-      color: "from-purple-500 to-pink-500",
-      bgColor: "bg-gradient-to-br from-purple-50 to-pink-50",
-      borderColor: "border-purple-200"
-    },
-    {
-      title: "Locations",
-      value: stats.ubicaciones.toString(),
-      description: "Active regions",
-      icon: MapPin,
-      color: "from-orange-500 to-amber-500",
-      bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
-      borderColor: "border-orange-200"
-    },
+    { title: i.batches, value: stats.totalBatches, desc: i.batchesDesc, icon: Package, gradient: "bg-gradient-mango" },
+    { title: i.producers, value: stats.producers, desc: i.producersDesc, icon: Users, gradient: "bg-gradient-earth" },
+    { title: i.orders, value: stats.orders, desc: i.ordersDesc, icon: DollarSign, gradient: "bg-gradient-mango" },
+    { title: i.regions, value: stats.regions, desc: i.regionsDesc, icon: MapPin, gradient: "bg-gradient-earth" },
   ];
-
-  const distributionData = [
-    { label: "Premium", percentage: 45, color: "from-green-500 to-emerald-600" },
-    { label: "Export", percentage: 35, color: "from-blue-500 to-cyan-600" },
-    { label: "First Grade", percentage: 15, color: "from-yellow-500 to-amber-600" },
-    { label: "Second Grade", percentage: 5, color: "from-slate-500 to-slate-600" },
-  ];
-
-  const handleViewLote = (loteId: string) => {
-    navigate(`/rastrear?lote=${loteId}`);
-  };
-
-  const handleRegisterNew = () => {
-    navigate("/registrar");
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/20">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header with Wallet Info */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center shadow-xl">
-              <BarChart3 className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
-                MangoChain Dashboard
-              </h1>
-              <p className="text-slate-600 text-lg mt-2">
-                Real-time supply chain monitoring on Polygon Amoy
-              </p>
-            </div>
-          </div>
-
-          {isConnected && (
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-2xl p-6 min-w-[320px] shadow-lg">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-lg font-bold text-emerald-800 flex items-center gap-2">
-                  <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-                  Wallet Connected
-                </span>
-                <Shield className="h-5 w-5 text-emerald-600" />
+      <div className="container mx-auto px-4 py-12 sm:py-20">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <motion.div initial="hidden" animate="visible" className="mb-12">
+            <motion.p custom={0} variants={fadeUp} className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">{i.label}</motion.p>
+            <motion.div custom={1} variants={fadeUp} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl sm:text-5xl font-extrabold text-foreground font-display mb-2">{i.title}</h1>
+                <p className="text-lg text-muted-foreground">
+                  {i.welcome}, <span className="font-semibold text-foreground">{profile?.full_name || user?.email || "Usuario"}</span> — {i.subtitle}
+                </p>
               </div>
-              <p className="text-sm font-mono text-emerald-700 mb-2 bg-white/50 p-2 rounded-lg border border-emerald-200">
-                {formatAddress(account)}
-              </p>
-              <p className="text-sm text-emerald-600 font-semibold">Polygon Amoy Testnet ✅</p>
-            </div>
-          )}
-        </div>
+              <div className="flex gap-3">
+                <Button onClick={() => navigate("/registrar")} className="bg-gradient-mango text-primary-foreground font-semibold rounded-2xl shadow-sm hover:shadow-elevated hover:scale-[1.01] transition-all">
+                  <Package className="mr-2 h-4 w-4" />{i.registerNew}
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/marketplace")} className="rounded-2xl border-border font-semibold hover:bg-muted transition-all">
+                  <DollarSign className="mr-2 h-4 w-4" />{i.marketplace}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
 
-        {/* Quick Actions */}
-        {isConnected && (
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Button
-              onClick={handleRegisterNew}
-              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-8 py-3 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 text-lg"
-              size="lg"
-            >
-              <Package className="mr-3 h-5 w-5" />
-              Register New Batch
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate("/rastrear")}
-              className="border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 font-bold px-8 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg"
-              size="lg"
-            >
-              <Eye className="mr-3 h-5 w-5" />
-              Track Batches
-            </Button>
-          </div>
-        )}
+          {/* Stats */}
+          <motion.div initial="hidden" animate="visible" className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10">
+            {statsData.map((stat, idx) => (
+              <motion.div key={stat.title} custom={idx} variants={fadeUp}
+                className="bg-card rounded-3xl p-6 shadow-card border border-border hover:shadow-elevated hover:-translate-y-1 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-11 h-11 ${stat.gradient} rounded-2xl flex items-center justify-center shadow-sm`}>
+                    <stat.icon className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <TrendingUp className="h-4 w-4 text-secondary" />
+                </div>
+                <p className="text-3xl font-extrabold text-foreground font-display">{stat.value}</p>
+                <p className="text-sm font-semibold text-foreground mt-1">{stat.title}</p>
+                <p className="text-xs text-muted-foreground">{stat.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statsData.map((stat, index) => (
-            <div
-              key={stat.title}
-              className="transform hover:-translate-y-2 transition-all duration-300"
-            >
-              <StatsCard {...stat} />
-            </div>
-          ))}
-        </div>
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            {/* Recent Batches */}
+            <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp} className="lg:col-span-2">
+              <div className="bg-card rounded-3xl p-8 shadow-card border border-border">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-card-foreground font-display">{i.recentTitle}</h2>
+                      <p className="text-xs text-muted-foreground">{i.recentDesc}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => navigate("/rastrear")} className="text-primary font-semibold">
+                    {i.viewAll}<ArrowUpRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Map Section */}
-          <Card className="lg:col-span-2 border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
-            <CardHeader className="pb-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                    <MapPin className="h-6 w-6 text-white" />
+                {batches.length > 0 ? (
+                  <div className="space-y-3">
+                    {batches.slice(0, 5).map((batch, idx) => (
+                      <motion.div key={batch.batch_id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.06 }}
+                        onClick={() => navigate(`/rastrear?lote=${batch.batch_id}`)}
+                        className="flex items-center justify-between p-4 rounded-2xl border border-border hover:border-primary/30 hover:shadow-sm bg-background cursor-pointer transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-gradient-mango rounded-xl flex items-center justify-center shadow-sm">
+                            <Leaf className="h-5 w-5 text-primary-foreground" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-foreground group-hover:text-primary transition-colors">{batch.batch_id}</p>
+                            <p className="text-xs text-muted-foreground">{batch.producer_name} · {batch.location}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="hidden sm:block text-sm font-semibold text-foreground">{batch.variety}</span>
+                          <span className={`text-[11px] px-2.5 py-1 rounded-full font-bold ${statusColors[batch.status] || "bg-muted text-muted-foreground"}`}>
+                            {batch.quality}
+                          </span>
+                          {batch.price_per_kg && (
+                            <span className="text-sm font-bold text-secondary">${batch.price_per_kg}/kg</span>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-14 h-14 mx-auto bg-muted rounded-2xl flex items-center justify-center mb-4">
+                      <Package className="h-7 w-7 text-muted-foreground" />
+                    </div>
+                    <p className="font-bold text-foreground mb-1">{i.noBatches}</p>
+                    <p className="text-sm text-muted-foreground mb-4">{i.noBatchesDesc}</p>
+                    <Button onClick={() => navigate("/registrar")} className="bg-gradient-mango text-primary-foreground font-semibold rounded-2xl">
+                      {i.registerFirst}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Quality Distribution */}
+            <motion.div initial="hidden" animate="visible" custom={1} variants={fadeUp}>
+              <div className="bg-card rounded-3xl p-8 shadow-card border border-border h-full">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center">
+                    <Award className="h-5 w-5 text-secondary" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl font-bold text-slate-900">
-                      Production Map
-                    </CardTitle>
-                    <CardDescription className="text-slate-600 text-lg">
-                      Main mango producing regions in Peru
-                    </CardDescription>
+                    <h2 className="text-lg font-bold text-card-foreground font-display">{i.qualityTitle}</h2>
+                    <p className="text-xs text-muted-foreground">{i.qualityDesc}</p>
                   </div>
                 </div>
-                <div className="flex gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></div>
-                    <span className="text-slate-700 font-medium">High Production</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-yellow-500 rounded-full shadow-sm"></div>
-                    <span className="text-slate-700 font-medium">Medium Production</span>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              <img
-                src={peruMap}
-                alt="Peru Map"
-                className="max-h-[280px] object-contain mb-6 shadow-lg rounded-2xl border border-slate-200"
-              />
-              <div className="grid grid-cols-3 gap-4 w-full max-w-md">
-                <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200 shadow-lg">
-                  <p className="font-bold text-green-800 text-lg">Piura</p>
-                  <p className="text-green-600 text-sm font-medium">68% of production</p>
-                </div>
-                <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl border-2 border-yellow-200 shadow-lg">
-                  <p className="font-bold text-yellow-800 text-lg">Lambayeque</p>
-                  <p className="text-yellow-600 text-sm font-medium">25% of production</p>
-                </div>
-                <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200 shadow-lg">
-                  <p className="font-bold text-blue-800 text-lg">Ica</p>
-                  <p className="text-blue-600 text-sm font-medium">7% of production</p>
-                </div>
-                <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200 shadow-lg">
-                  <p className="font-bold text-blue-800 text-lg">La Libertad</p>
-                  <p className="text-blue-600 text-sm font-medium">7% of production</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Recent Activity */}
-          <Card className="border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
-            <CardHeader className="pb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Calendar className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl font-bold text-slate-900">
-                    Recent Batches
-                  </CardTitle>
-                  <CardDescription className="text-slate-600 text-lg">
-                    Latest registrations on Polygon Amoy
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {lotes.length > 0 ? (
-                <div className="space-y-4">
-                  {lotes.map((lote) => (
-                    <div
-                      key={lote.id}
-                      className="flex flex-col gap-3 p-4 rounded-2xl border-2 border-slate-200 hover:border-green-300 hover:shadow-lg transition-all duration-300 cursor-pointer group bg-white"
-                      onClick={() => handleViewLote(lote.id)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold text-lg group-hover:text-green-700 transition-colors">
-                            {lote.id}
-                          </p>
-                          <p className="text-slate-600 text-sm font-medium">{lote.productor}</p>
-                        </div>
-                        <span className={`text-xs px-3 py-1.5 rounded-full font-bold ${lote.calidad === 'Premium' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' :
-                          lote.calidad === 'Exportación' ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' :
-                            'bg-gradient-to-r from-yellow-500 to-amber-500 text-white'
-                          } shadow-sm`}>
-                          {lote.calidad}
-                        </span>
-                      </div>
+                <div className="space-y-5">
+                  {qualityDistribution.map((item) => (
+                    <div key={item.label} className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <p className="text-slate-500 text-sm font-medium flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {lote.ubicacion}
-                        </p>
-                        <p className="text-slate-500 text-sm font-medium">{lote.fecha}</p>
+                        <span className="text-sm font-bold text-foreground flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${qualityColors[item.label] || "bg-muted-foreground"}`} />
+                          {item.label}
+                        </span>
+                        <span className="text-sm font-bold text-foreground">{item.percentage}%</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2.5">
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${item.percentage}%` }} transition={{ duration: 1, ease: "easeOut" }}
+                          className={`h-2.5 rounded-full ${qualityColors[item.label] || "bg-muted-foreground"}`} />
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 mx-auto bg-gradient-to-br from-slate-400 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg mb-4">
-                    <Package className="h-8 w-8 text-white" />
+
+                {/* Network Info */}
+                <div className="mt-8 pt-6 border-t border-border">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-bold text-foreground">{i.networkTitle}</h3>
                   </div>
-                  <p className="text-slate-600 text-lg mb-4 font-medium">No batches registered</p>
-                  <Button
-                    onClick={handleRegisterNew}
-                    className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-                  >
-                    Register First Batch
-                  </Button>
+                  <div className="space-y-2">
+                    {[
+                      { label: "Network", value: "Polygon Amoy" },
+                      { label: "Chain ID", value: "80002" },
+                      { label: "Status", value: "🟢 Active" },
+                    ].map((row) => (
+                      <div key={row.label} className="flex justify-between items-center p-2.5 bg-muted rounded-xl">
+                        <span className="text-xs font-semibold text-muted-foreground">{row.label}</span>
+                        <span className="text-xs font-bold text-foreground font-mono">{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              )}
+              </div>
+            </motion.div>
+          </div>
 
-              {lotes.length > 0 && (
-                <Button
-                  variant="outline"
-                  className="w-full mt-6 border-2 border-green-200 text-green-700 hover:text-green-800 hover:bg-green-50 font-bold py-3 rounded-full transition-all duration-300"
-                  onClick={() => navigate("/rastrear")}
-                >
-                  View All Batches
-                  <ArrowUpRight className="ml-2 h-5 w-5" />
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Distribution Chart & Blockchain Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          {/* Distribution Chart */}
-          <Card className="border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
-            <CardHeader className="pb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <TrendingUp className="h-6 w-6 text-white" />
+          {/* Map */}
+          <motion.div initial="hidden" animate="visible" custom={2} variants={fadeUp}>
+            <div className="bg-card rounded-3xl p-8 shadow-card border border-border">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-bold text-slate-900">
-                    Quality Distribution
-                  </CardTitle>
-                  <CardDescription className="text-slate-600 text-lg">
-                    Batch percentage by quality grade
-                  </CardDescription>
+                  <h2 className="text-xl font-bold text-card-foreground font-display">{i.mapTitle}</h2>
+                  <p className="text-xs text-muted-foreground">{i.mapDesc}</p>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {distributionData.map((item, index) => (
-                  <div key={item.label} className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-slate-700 flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full bg-gradient-to-r ${item.color} shadow-sm`}></div>
-                        {item.label}
-                      </span>
-                      <span className="text-lg font-bold text-slate-900">{item.percentage}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-4 shadow-inner">
-                      <div
-                        className={`h-4 rounded-full bg-gradient-to-r ${item.color} shadow-lg transition-all duration-1000 ease-out`}
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Blockchain Info */}
-          <Card className="border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 bg-white">
-            <CardHeader className="pb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-sky-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Cpu className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl font-bold text-slate-900">
-                    Network Status
-                  </CardTitle>
-                  <CardDescription className="text-slate-600 text-lg">
-                    Polygon Amoy Testnet Information
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200">
-                  <span className="text-lg font-bold text-green-800 flex items-center gap-2">
-                    <Database className="h-5 w-5" />
-                    Network
-                  </span>
-                  <span className="text-lg text-green-700 font-bold font-mono">Polygon Amoy</span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200">
-                  <span className="text-lg font-bold text-blue-800 flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Chain ID
-                  </span>
-                  <span className="text-lg text-blue-700 font-bold font-mono">80002</span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
-                  <span className="text-lg font-bold text-purple-800 flex items-center gap-2">
-                    <Eye className="h-5 w-5" />
-                    Block Explorer
-                  </span>
-                  <a
-                    href="https://amoy.polygonscan.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-lg text-purple-700 hover:text-purple-800 hover:underline flex items-center gap-2 font-bold transition-all duration-200"
-                  >
-                    polygonscan.com
-                    <ArrowUpRight className="h-4 w-4" />
-                  </a>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border-2 border-orange-200">
-                  <span className="text-lg font-bold text-orange-800 flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Batches on Blockchain
-                  </span>
-                  <span className="text-2xl text-orange-700 font-black">{stats.totalLotes}</span>
+                <div className="ml-auto flex gap-4 text-xs">
+                  <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-secondary rounded-full" />{i.highProd}</span>
+                  <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-accent rounded-full" />{i.medProd}</span>
                 </div>
               </div>
 
-              {!isConnected && (
-                <div className="mt-6 p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl">
-                  <p className="text-amber-800 text-lg font-bold text-center">
-                    Connect your wallet to start registering batches
-                  </p>
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <img src={peruMap} alt="Peru Map" className="max-h-[240px] object-contain rounded-2xl border border-border shadow-sm" />
+                <div className="grid grid-cols-2 gap-3 flex-1 w-full">
+                  {[
+                    { name: "Piura", pct: "68%", color: "bg-secondary/10 border-secondary/20 text-secondary" },
+                    { name: "Lambayeque", pct: "25%", color: "bg-accent/10 border-accent/20 text-accent-foreground" },
+                    { name: "Ica", pct: "4%", color: "bg-primary/10 border-primary/20 text-primary" },
+                    { name: "La Libertad", pct: "3%", color: "bg-muted border-border text-muted-foreground" },
+                  ].map((r) => (
+                    <div key={r.name} className={`p-4 rounded-2xl border ${r.color}`}>
+                      <p className="font-bold text-sm">{r.name}</p>
+                      <p className="text-2xl font-extrabold font-display">{r.pct}</p>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>
