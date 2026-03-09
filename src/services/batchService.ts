@@ -42,7 +42,8 @@ export const saveBatchToDatabase = async (batchData: BatchRecord) => {
 
     if (error) {
       console.error("Error saving batch:", error);
-      toast.error(`Error: ${error.message}`);
+      const msg = error.code === '23505' ? 'El ID de lote ya existe.' : 'Error al guardar el lote. Inténtalo de nuevo.';
+      toast.error(msg);
       return { success: false, error };
     }
 
