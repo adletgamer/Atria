@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback, ReactNode, createElement } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
 import { polygonAmoy } from 'wagmi/chains';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 /**
  * Hook personalizado para gestionar la conexión de wallet con Wagmi
