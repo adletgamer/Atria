@@ -1,8 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Wallet, LogOut, AlertCircle, Leaf } from "lucide-react";
+import { Menu, X, Wallet, LogOut, AlertCircle, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useMetaMask } from "@/hooks/useMetaMask";
+import { useLanguage } from "@/hooks/useLanguage";
+import logo from "@/assets/logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,24 +12,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navItems = [
-  { path: "/", label: "Inicio" },
-  { path: "/registrar", label: "Registrar" },
-  { path: "/rastrear", label: "Rastrear" },
-  { path: "/dashboard", label: "Dashboard" },
-];
-
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { account, isConnected, isLoading, error, connectWallet, disconnectWallet, formatAddress, chain, isNetworkValid } = useMetaMask();
+  const { lang, toggle } = useLanguage();
+
+  const navItems = [
+    { path: "/", label: lang === "es" ? "Inicio" : "Home" },
+    { path: "/registrar", label: lang === "es" ? "Registrar" : "Register" },
+    { path: "/rastrear", label: lang === "es" ? "Rastrear" : "Track" },
+    { path: "/dashboard", label: "Dashboard" },
+  ];
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <nav className="sticky top-0 z-50 w-full glass border-b border-border/50">
       <div className="container mx-auto px-4">
-        {/* Error Banner */}
         {error && isConnected && (
           <div className="py-2">
             <div className="flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-2 text-sm text-destructive">
@@ -40,8 +42,8 @@ const Navbar = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="bg-gradient-mango w-9 h-9 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
-              <Leaf className="h-5 w-5 text-primary-foreground" />
+            <div className="bg-gradient-mango w-10 h-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
+              <img src={logo} alt="MangoChain" className="h-7 w-7" />
             </div>
             <span className="text-lg font-extrabold text-gradient-mango hidden sm:inline font-display">
               MangoChain
@@ -65,8 +67,18 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Wallet + Mobile Menu */}
-          <div className="flex items-center gap-3">
+          {/* Wallet + Lang + Mobile Menu */}
+          <div className="flex items-center gap-2">
+            {/* Language Toggle */}
+            <button
+              onClick={toggle}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+              title={lang === "es" ? "Switch to English" : "Cambiar a Español"}
+            >
+              <Globe className="h-3.5 w-3.5" />
+              {lang === "es" ? "EN" : "ES"}
+            </button>
+
             {/* Desktop Wallet */}
             <div className="hidden md:block">
               {!isConnected ? (
@@ -81,7 +93,9 @@ const Navbar = () => {
                   ) : (
                     <Wallet className="mr-2 h-4 w-4" />
                   )}
-                  {isLoading ? "Conectando..." : "Conectar"}
+                  {isLoading
+                    ? (lang === "es" ? "Conectando..." : "Connecting...")
+                    : (lang === "es" ? "Conectar" : "Connect")}
                 </Button>
               ) : (
                 <DropdownMenu>
@@ -102,18 +116,18 @@ const Navbar = () => {
                   <DropdownMenuContent align="end" className="rounded-xl border border-border shadow-elevated p-1 w-48">
                     {!isNetworkValid && (
                       <div className="px-3 py-2 text-xs text-destructive font-medium">
-                        Red incorrecta — usa Polygon Amoy
+                        {lang === "es" ? "Red incorrecta — usa Polygon Amoy" : "Wrong network — use Polygon Amoy"}
                       </div>
                     )}
                     <DropdownMenuItem disabled className="text-xs text-muted-foreground rounded-lg">
-                      {chain || "Conectando..."}
+                      {chain || (lang === "es" ? "Conectando..." : "Connecting...")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-destructive cursor-pointer rounded-lg"
                       onClick={() => disconnectWallet()}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
-                      Desconectar
+                      {lang === "es" ? "Desconectar" : "Disconnect"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -156,7 +170,9 @@ const Navbar = () => {
                   disabled={isLoading}
                 >
                   <Wallet className="mr-2 h-4 w-4" />
-                  {isLoading ? "Conectando..." : "Conectar Wallet"}
+                  {isLoading
+                    ? (lang === "es" ? "Conectando..." : "Connecting...")
+                    : (lang === "es" ? "Conectar Wallet" : "Connect Wallet")}
                 </Button>
               ) : (
                 <div className="space-y-3">
@@ -167,7 +183,7 @@ const Navbar = () => {
                       isNetworkValid ? "text-secondary" : "text-destructive"
                     }`}>
                       <div className={`w-2 h-2 rounded-full ${isNetworkValid ? "bg-secondary" : "bg-destructive animate-pulse"}`} />
-                      {isNetworkValid ? "Conectado" : "Red Incorrecta"}
+                      {isNetworkValid ? (lang === "es" ? "Conectado" : "Connected") : (lang === "es" ? "Red Incorrecta" : "Wrong Network")}
                     </div>
                     <p className="font-mono text-xs text-muted-foreground mt-1">{formatAddress(account)}</p>
                   </div>
@@ -177,7 +193,7 @@ const Navbar = () => {
                     onClick={() => { disconnectWallet(); setIsOpen(false); }}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Desconectar
+                    {lang === "es" ? "Desconectar" : "Disconnect"}
                   </Button>
                 </div>
               )}

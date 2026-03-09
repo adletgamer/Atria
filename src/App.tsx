@@ -7,6 +7,7 @@ import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import wagmiConfig from "@/config/wagmi";
 import { queryClient } from "@/config/queryClient";
+import { LanguageProvider } from "@/hooks/useLanguage";
 import Index from "./pages/Index";
 import Registrar from "./pages/Registrar";
 import Rastrear from "./pages/Rastrear";
@@ -15,34 +16,27 @@ import Verify from "./pages/Verify";
 import QRTest from "./pages/QRTest";
 import NotFound from "./pages/NotFound";
 
-/**
- * Orden CRÍTICO de Providers:
- * 1. QueryClientProvider (debe estar primero)
- * 2. WagmiProvider (necesita QueryClient)
- * 3. RainbowKitProvider (necesita Wagmi)
- * 4. TooltipProvider
- * 5. BrowserRouter
- */
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <WagmiProvider config={wagmiConfig}>
       <RainbowKitProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/registrar" element={<Registrar />} />
-              <Route path="/rastrear" element={<Rastrear />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/verify/:batchId" element={<Verify />} />
-              <Route path="/qr-test" element={<QRTest />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/registrar" element={<Registrar />} />
+                <Route path="/rastrear" element={<Rastrear />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/verify/:batchId" element={<Verify />} />
+                <Route path="/qr-test" element={<QRTest />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </LanguageProvider>
       </RainbowKitProvider>
     </WagmiProvider>
   </QueryClientProvider>
