@@ -14,8 +14,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import QRGenerator from "@/components/QRGenerator";
 import { VARIETY_OPTIONS, getVarietyById } from "@/constants/mangoVarieties";
-import { saveBatchToDatabase } from "@/services/batchService";
-import type { BatchRecord } from "@/services/batchService";
+import { lotService } from "@/services/lotService";
+import { trackingService } from "@/services/trackingService";
+import type { CreateLotPayload } from "@/types/lot.types";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -146,42 +147,79 @@ const Registrar = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) { toast.error(i.loginRequired); return; }
-    if (!isConnected) { toast.error(i.walletTitle); return; }
-    if (!formData.loteId || !formData.productor || !formData.calidad || !formData.variedad) {
-      toast.error(i.fillAll); return;
+    
+    // VALIDACIÓN 1: Usuario autenticado
+    if (!user) {
+      toast.error(i.loginRequired);
+      return;
     }
+
+    // VALIDACIÓN 2: Wallet conectada
+    if (!isConnected) {
+      toast.error(i.walletTitle);
+      return;
+    }
+
+    // VALIDACIÓN 3: Campos obligatorios
+    if (!formData.loteId || !formData.productor || !formData.calidad || !formData.variedad) {
+      toast.error(i.fillAll);
+      return;
+    }
+
+    // VALIDACIÓN 4: Variedad válida
     const varietyInfo = getVarietyById(formData.variedad);
-    if (!varietyInfo) { toast.error(i.selectVar); return; }
+    if (!varietyInfo) {
+      toast.error(i.selectVar);
+      return;
+    }
+
+    // VALIDACIÓN 5: Formato de lot_id (XX-YYYY-NNN)
+    if (!lotService.validateLotIdFormat(formData.loteId)) {
+      toast.error("Formato de ID inválido. Usa: XX-YYYY-NNN (ej: MG-2025-001)");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const refId = crypto.randomUUID();
-      const batchData: BatchRecord = {
-        batch_id: formData.loteId,
-        producer_name: formData.productor,
-        location: formData.ubicacion,
-        variety: varietyInfo.name,
-        quality: formData.calidad,
-        transaction_hash: refId,
-        wallet_address: account || undefined,
-        total_kg: formData.totalKg ? parseFloat(formData.totalKg) : undefined,
-        price_per_kg: formData.pricePerKg ? parseFloat(formData.pricePerKg) : undefined,
-        is_listed: formData.isListed,
-        metadata: {
-          varietyId: formData.variedad,
-          timestamp: new Date().toISOString(),
-          network: "MangoChain Registry",
+      // PASO 1: Crear payload con atributos estándar
+      const payload: CreateLotPayload = {
+        lot_id: formData.loteId,
+        producer_id: user.id,
+        origin_location: formData.ubicacion,
+        attributes: {
+          variety: varietyInfo.name,
+          quality: formData.calidad,
+          total_kg: formData.totalKg || null,
+          price_per_kg: formData.pricePerKg || null,
+          is_listed: formData.isListed ? "true" : "false",
+          wallet_address: account || null,
+          variety_id: formData.variedad,
           emoji: varietyInfo.emoji,
         },
       };
 
-      const result = await saveBatchToDatabase(batchData);
-      if (result.success) {
-        toast.success(i.success);
-        setRegistrationSuccess(true);
+      // PASO 2: Crear lote (transacción atómica)
+      const result = await lotService.createLot(payload);
+
+      if (!result.success) {
+        toast.error(result.error || i.errorReg);
+        return;
       }
-    } catch {
+
+      // PASO 3: Registrar evento de listado si aplica
+      if (formData.isListed && result.data) {
+        await trackingService.logMarketplaceListing(
+          result.data.lot_id,
+          user.id,
+          true
+        );
+      }
+
+      // PASO 4: Mostrar éxito
+      toast.success(i.success);
+      setRegistrationSuccess(true);
+    } catch (error) {
+      console.error("Error en handleSubmit:", error);
       toast.error(i.errorReg);
     } finally {
       setIsLoading(false);

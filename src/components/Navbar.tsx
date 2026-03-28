@@ -1,8 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Wallet, LogOut, AlertCircle, Globe, UserCircle, ChevronDown, BarChart3, Package, Search, ShoppingBag, Home } from "lucide-react";
+import { Menu, X, LogOut, Globe, ChevronDown, BarChart3, Package, Home, FileText, ShieldCheck, Activity, Settings, Workflow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { useMetaMask } from "@/hooks/useMetaMask";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.png";
@@ -18,7 +17,6 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
-  const { account, isConnected: walletConnected, isLoading, error, connectWallet, disconnectWallet, formatAddress, chain, isNetworkValid } = useMetaMask();
   const { lang, toggle } = useLanguage();
   const { user, profile, signOut } = useAuth();
 
@@ -28,33 +26,40 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navItems = [
+  const publicNavItems = [
     { path: "/", label: lang === "es" ? "Inicio" : "Home", icon: Home },
-    { path: "/marketplace", label: lang === "es" ? "Mercado" : "Market", icon: ShoppingBag },
-    { path: "/registrar", label: lang === "es" ? "Registrar" : "Register", icon: Package },
-    { path: "/rastrear", label: lang === "es" ? "Rastrear" : "Track", icon: Search },
-    { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
+    { path: "/#product", label: lang === "es" ? "Producto" : "Product", icon: Package },
+    { path: "/#how-it-works", label: lang === "es" ? "Cómo funciona" : "How it works", icon: Workflow },
+    { path: "/verify-pack", label: lang === "es" ? "Verificar Pack" : "Verify Pack", icon: ShieldCheck },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const appNavItems = [
+    { path: "/overview", label: lang === "es" ? "Overview" : "Overview", icon: BarChart3 },
+    { path: "/consignments", label: lang === "es" ? "Consignaciones" : "Consignments", icon: Package },
+    { path: "/evidence", label: lang === "es" ? "Evidencia" : "Evidence", icon: FileText },
+    { path: "/readiness", label: lang === "es" ? "Readiness" : "Readiness", icon: Activity },
+    { path: "/verify-pack", label: lang === "es" ? "Verificar Pack" : "Verify Pack", icon: ShieldCheck },
+    { path: "/analytics", label: lang === "es" ? "Analítica" : "Analytics", icon: BarChart3 },
+    { path: "/settings", label: lang === "es" ? "Ajustes" : "Settings", icon: Settings },
+  ];
+
+  const navItems = user ? appNavItems : publicNavItems;
+
+  const isActive = (path: string) => {
+    if (path.includes("#")) {
+      return location.pathname === "/";
+    }
+    return location.pathname === path;
+  };
 
   return (
     <nav className={`sticky top-0 z-50 w-full transition-all duration-300 ${
       scrolled ? "glass shadow-card border-b border-border/30" : "bg-transparent border-b border-transparent"
     }`}>
       <div className="container mx-auto px-4">
-        {error && walletConnected && (
-          <div className="py-2">
-            <div className="flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-2 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              <span>{error}</span>
-            </div>
-          </div>
-        )}
-
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to={user ? "/overview" : "/"} className="flex items-center gap-2.5 group">
             <div className="bg-gradient-mango w-9 h-9 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all duration-300">
               <img src={logo} alt="MangoChain" className="h-6 w-6" />
             </div>
@@ -112,6 +117,11 @@ const Navbar = () => {
                       </p>
                     </div>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild className="cursor-pointer rounded-xl text-xs font-semibold">
+                      <Link to="/settings">
+                        <Settings className="mr-2 h-3.5 w-3.5" />{lang === "es" ? "Ajustes" : "Settings"}
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive cursor-pointer rounded-xl text-xs font-semibold" onClick={signOut}>
                       <LogOut className="mr-2 h-3.5 w-3.5" />{lang === "es" ? "Cerrar sesión" : "Log out"}
                     </DropdownMenuItem>
@@ -123,34 +133,6 @@ const Navbar = () => {
                     {lang === "es" ? "Iniciar sesión" : "Log in"}
                   </Button>
                 </Link>
-              )}
-
-              {/* Wallet */}
-              {!walletConnected ? (
-                <Button size="sm" className="bg-gradient-mango text-primary-foreground font-bold px-4 h-8 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 text-xs"
-                  onClick={() => connectWallet()} disabled={isLoading}>
-                  {isLoading ? <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent mr-1.5" /> : <Wallet className="mr-1.5 h-3.5 w-3.5" />}
-                  {isLoading ? "..." : "Wallet"}
-                </Button>
-              ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm"
-                      className={`font-medium px-3 h-8 rounded-xl border transition-all text-xs ${
-                        isNetworkValid ? "border-secondary/30 bg-secondary/5 text-secondary" : "border-destructive/30 bg-destructive/5 text-destructive"
-                      }`}>
-                      <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isNetworkValid ? "bg-secondary" : "bg-destructive animate-pulse"}`} />
-                      <span className="font-mono">{formatAddress(account)}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-2xl border-border shadow-elevated p-1.5 w-52">
-                    {!isNetworkValid && <div className="px-3 py-2 text-xs text-destructive font-semibold">{lang === "es" ? "Red incorrecta" : "Wrong network"}</div>}
-                    <DropdownMenuItem disabled className="text-xs text-muted-foreground rounded-xl">{chain || "..."}</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive cursor-pointer rounded-xl text-xs font-semibold" onClick={() => disconnectWallet()}>
-                      <LogOut className="mr-2 h-3.5 w-3.5" />{lang === "es" ? "Desconectar" : "Disconnect"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               )}
             </div>
 
@@ -176,41 +158,22 @@ const Navbar = () => {
             ))}
             <div className="pt-3 px-2 border-t border-border/30 mt-2 space-y-3">
               {user ? (
-                <div className="flex items-center justify-between p-3 bg-muted/60 rounded-xl border border-border/50">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 bg-gradient-mango rounded-full flex items-center justify-center">
-                      <span className="text-[10px] font-bold text-primary-foreground">
-                        {(profile?.full_name || user.email || "U")[0].toUpperCase()}
-                      </span>
-                    </div>
-                    <span className="text-sm font-semibold text-foreground truncate">{profile?.full_name || user.email?.split("@")[0]}</span>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => { signOut(); setIsOpen(false); }} className="text-destructive text-xs h-7 px-2">
-                    <LogOut className="h-3.5 w-3.5" />
+                <>
+                  <Link to="/settings" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full rounded-xl border-border" variant="outline">
+                      <Settings className="mr-2 h-4 w-4" />{lang === "es" ? "Ajustes" : "Settings"}
+                    </Button>
+                  </Link>
+                  <Button variant="outline" size="sm" onClick={() => { signOut(); setIsOpen(false); }} className="w-full text-destructive border-destructive/20 rounded-xl">
+                    <LogOut className="mr-2 h-3.5 w-3.5" />{lang === "es" ? "Cerrar sesión" : "Log out"}
                   </Button>
-                </div>
+                </>
               ) : (
                 <Link to="/login" onClick={() => setIsOpen(false)}>
                   <Button className="w-full rounded-xl border-border" variant="outline">
                     {lang === "es" ? "Iniciar sesión" : "Log in"}
                   </Button>
                 </Link>
-              )}
-              {!walletConnected ? (
-                <Button className="w-full bg-gradient-mango text-primary-foreground font-bold rounded-xl"
-                  onClick={() => { connectWallet(); setIsOpen(false); }} disabled={isLoading}>
-                  <Wallet className="mr-2 h-4 w-4" />{isLoading ? "..." : "Wallet"}
-                </Button>
-              ) : (
-                <div className="space-y-2">
-                  <div className={`p-3 rounded-xl text-center border text-sm ${isNetworkValid ? "bg-secondary/5 border-secondary/20 text-secondary" : "bg-destructive/5 border-destructive/20 text-destructive"}`}>
-                    <span className="font-mono text-xs">{formatAddress(account)}</span>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full text-destructive border-destructive/20 rounded-xl"
-                    onClick={() => { disconnectWallet(); setIsOpen(false); }}>
-                    <LogOut className="mr-2 h-3.5 w-3.5" />{lang === "es" ? "Desconectar" : "Disconnect"}
-                  </Button>
-                </div>
               )}
             </div>
           </div>

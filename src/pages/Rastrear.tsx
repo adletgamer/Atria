@@ -9,7 +9,8 @@ import { Search, Package, MapPin, User, CheckCircle, Truck, Shield, Barcode, Awa
 import { toast } from "sonner";
 import QRGenerator from "@/components/QRGenerator";
 import { useLanguage } from "@/hooks/useLanguage";
-import { supabase } from "@/integrations/supabase/client";
+import { lotService } from "@/services/lotService";
+import { trackingService } from "@/services/trackingService";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -98,23 +99,6 @@ const txt = {
 const stepIcons = [Leaf, Truck, Store, ShoppingBag];
 const stepGradients = ["bg-gradient-earth", "bg-gradient-mango", "bg-primary", "bg-secondary"];
 
-const DEMO_DATA: Record<string, any> = {
-  "MG-2025-001": {
-    batch_id: "MG-2025-001", producer_name: "Juan García", location: "Piura", variety: "Kent",
-    quality: "Premium", status: "in_transit", total_kg: 500, price_per_kg: 2.80,
-    created_at: "2025-12-01T10:00:00Z", transaction_hash: "0x7f3a...b29e1c4d",
-  },
-  "MG-2025-002": {
-    batch_id: "MG-2025-002", producer_name: "María López", location: "Lambayeque", variety: "Tommy Atkins",
-    quality: "Exportación", status: "delivered", total_kg: 300, price_per_kg: 2.50,
-    created_at: "2025-12-05T14:00:00Z", transaction_hash: "0x4e2b...a81f3d7c",
-  },
-};
-
-const statusToStep: Record<string, number> = {
-  registered: 0, in_transit: 1, exported: 2, delivered: 3,
-};
-
 const Rastrear = () => {
   const [searchParams] = useSearchParams();
   const [loteId, setLoteId] = useState("");
@@ -130,51 +114,59 @@ const Rastrear = () => {
 
   const handleSearch = async (searchId?: string) => {
     const searchValue = searchId || loteId;
-    if (!searchValue) { toast.error(i.placeholder); return; }
+    
+    // VALIDACIÓN: Entrada no vacía
+    if (!searchValue) {
+      toast.error(i.placeholder);
+      return;
+    }
+
     setIsSearching(true);
-
-    // Try Supabase first
-    const { data } = await supabase.from("batches").select("*").eq("batch_id", searchValue).maybeSingle();
-
-    // Fallback to localStorage then demo
-    let result: any = data;
-    if (!result) {
-      const local = JSON.parse(localStorage.getItem("lotes") || "[]");
-      result = local.find((l: any) => l.loteId === searchValue || l.batch_id === searchValue);
-    }
-    if (!result) {
-      result = DEMO_DATA[searchValue];
-    }
-
-    setTimeout(() => {
-      if (result) {
-        const batchId = result.batch_id || result.loteId;
-        const producerName = result.producer_name || result.productor;
-        const createdDate = result.created_at || result.timestamp;
-        const activeStep = statusToStep[result.status] ?? 0;
-        setLoteData({
-          ...result,
-          batch_id: batchId,
-          producer_name: producerName,
-          steps: i.steps.map((step, idx) => ({
-            ...step,
-            description: idx === 0 ? `${step.descTpl || step.desc} ${producerName}` : step.desc,
-            completed: idx <= activeStep,
-            current: idx === activeStep,
-            date: idx === 0
-              ? new Date(createdDate).toLocaleDateString(lang === "es" ? "es-PE" : "en-US", { month: "short", day: "numeric" })
-              : idx <= activeStep
-                ? new Date(Date.now() + idx * 86400000 * 3).toLocaleDateString(lang === "es" ? "es-PE" : "en-US", { month: "short", day: "numeric" })
-                : undefined,
-          })),
-        });
-        toast.success(i.found);
-      } else {
+    try {
+      // PASO 1: Obtener lote completo desde DB
+      const lotResult = await lotService.getLotByLotId(searchValue);
+      
+      if (!lotResult.success || !lotResult.data) {
         toast.error(i.notFound);
         setLoteData(null);
+        return;
       }
+
+      const lotData = lotResult.data;
+
+      // PASO 2: Obtener timeline de eventos
+      const timelineResult = await trackingService.getLotTimeline(searchValue);
+      const events = timelineResult.success ? timelineResult.data : [];
+
+      // PASO 3: Construir pasos desde eventos reales
+      const createdDate = lotData.created_at;
+      const steps = i.steps.map((step, idx) => ({
+        ...step,
+        description: idx === 0 
+          ? `${step.descTpl || step.desc} ${lotData.producer_name || "Desconocido"}` 
+          : step.desc,
+        completed: idx === 0, // Solo el primer paso (creación) está completado
+        current: idx === 0,
+        date: idx === 0
+          ? new Date(createdDate).toLocaleDateString(lang === "es" ? "es-PE" : "en-US", { month: "short", day: "numeric" })
+          : undefined,
+      }));
+
+      // PASO 4: Preparar datos para mostrar
+      setLoteData({
+        ...lotData,
+        steps,
+        events, // Incluir eventos para referencia
+      });
+
+      toast.success(i.found);
+    } catch (error) {
+      console.error("Error en handleSearch:", error);
+      toast.error(i.notFound);
+      setLoteData(null);
+    } finally {
       setIsSearching(false);
-    }, 600);
+    }
   };
 
   return (

@@ -3,336 +3,267 @@ pragma solidity ^0.8.19;
 
 /**
  * @title MangoChainRegistry
- * @dev Smart contract para registro y trazabilidad de lotes de mango en Polygon Amoy
- * @author MangoChain Team
+ * @dev Evidence anchoring contract for consignment compliance protocol.
+ *
+ * DESIGN PRINCIPLE:
+ *   Nothing sensitive lives on-chain.
+ *   On-chain = root hashes, attestation hashes, state snapshot hashes.
+ *   Off-chain = documents, metadata, PII, events, scoring, analytics.
+ *
+ * PATTERN:
+ *   1. System gathers evidence off-chain (Supabase).
+ *   2. Computes content hashes per evidence object (SHA-256).
+ *   3. Builds a bundle hash / Merkle root per consignment.
+ *   4. Generates state snapshot hash.
+ *   5. Anchors root + snapshot on-chain via this contract.
+ *   6. Third party verifies pack matches commitment.
+ *
+ * ANCHOR TYPES:
+ *   0 = evidence_pack    — Merkle root of all evidence objects
+ *   1 = attestation      — hash of a critical attestation
+ *   2 = state_snapshot   — hash of current consignment state
+ *   3 = custody_chain    — hash of full custody transfer chain
+ *   4 = full_consignment — combined root of entire dossier
+ *
+ * @author MangoChain Protocol
  */
 contract MangoChainRegistry {
+
+    // ============ ENUMS ============
+
+    enum AnchorType {
+        EvidencePack,
+        Attestation,
+        StateSnapshot,
+        CustodyChain,
+        FullConsignment
+    }
+
     // ============ STRUCTS ============
-    
-    struct LoteMango {
-        string loteId;
-        address productor;
-        string productorName;
-        string ubicacion;
-        string variedad;
-        string calidad;
-        uint256 fechaCosecha;
-        uint256 fechaRegistro;
-        address owner;
-        string metadata; // IPFS hash para fotos/certificados
-        bool activo;
+
+    struct Anchor {
+        bytes32   rootHash;
+        AnchorType anchorType;
+        bytes32   scope;          // keccak256(consignment_id) — no PII on-chain
+        uint32    version;
+        address   submitter;
+        uint64    anchoredAt;
     }
-    
-    struct Transferencia {
-        address from;
-        address to;
-        uint256 timestamp;
-        string motivo;
-        string comentario;
-    }
-    
-    // ============ STATE VARIABLES ============
-    
+
+    // ============ STATE ============
+
     address public owner;
-    uint256 public totalLotes;
-    uint256 public totalTransferencias;
-    
-    // Mappings para almacenar datos
-    mapping(string => LoteMango) public lotes;
-    mapping(string => Transferencia[]) public historialLotes;
-    mapping(address => string[]) public lotesPorProductor;
-    mapping(string => bool) public loteIdExiste;
-    
+    bool    public paused;
+
+    uint256 public totalAnchors;
+
+    // scope → version → Anchor
+    mapping(bytes32 => mapping(uint32 => Anchor)) public anchors;
+    // scope → latest version
+    mapping(bytes32 => uint32) public latestVersion;
+    // rootHash → exists (for O(1) verification)
+    mapping(bytes32 => bool) public hashExists;
+
+    // Authorized submitters (export managers, system wallets)
+    mapping(address => bool) public authorizedSubmitters;
+
     // ============ EVENTS ============
-    
-    event LoteRegistrado(
-        string indexed loteId,
-        address indexed productor,
-        string productorName,
-        string ubicacion,
-        string variedad,
-        string calidad,
-        uint256 fechaRegistro
+
+    event AnchorCommitted(
+        bytes32 indexed scope,
+        bytes32 indexed rootHash,
+        AnchorType  anchorType,
+        uint32      version,
+        address     submitter,
+        uint64      anchoredAt
     );
-    
-    event PropiedadTransferida(
-        string indexed loteId,
-        address indexed previousOwner,
-        address indexed newOwner,
-        string motivo,
-        uint256 timestamp
-    );
-    
-    event LoteVerificado(
-        string indexed loteId,
-        address verifier,
-        uint256 timestamp,
-        bool resultado
-    );
-    
-    event ContratoActualizado(
-        address indexed admin,
-        string version,
-        uint256 timestamp
-    );
-    
+
+    event SubmitterAuthorized(address indexed submitter, bool authorized);
+    event OwnershipTransferred(address indexed previous, address indexed next);
+    event Paused(address indexed by);
+    event Unpaused(address indexed by);
+
     // ============ MODIFIERS ============
-    
+
     modifier onlyOwner() {
-        require(msg.sender == owner, "Solo el owner puede ejecutar esta funcion");
+        require(msg.sender == owner, "Not owner");
         _;
     }
-    
-    modifier loteExiste(string memory _loteId) {
-        require(loteIdExiste[_loteId], "Lote no existe");
+
+    modifier onlyAuthorized() {
+        require(
+            authorizedSubmitters[msg.sender] || msg.sender == owner,
+            "Not authorized"
+        );
         _;
     }
-    
-    modifier esOwnerDelLote(string memory _loteId) {
-        require(lotes[_loteId].owner == msg.sender, "No eres el dueno de este lote");
+
+    modifier whenNotPaused() {
+        require(!paused, "Contract paused");
         _;
     }
-    
+
     // ============ CONSTRUCTOR ============
-    
+
     constructor() {
         owner = msg.sender;
-        totalLotes = 0;
-        totalTransferencias = 0;
-        
-        emit ContratoActualizado(msg.sender, "v1.0", block.timestamp);
+        authorizedSubmitters[msg.sender] = true;
     }
-    
-    // ============ CORE FUNCTIONS ============
-    
+
+    // ============ CORE: ANCHOR ============
+
     /**
-     * @dev Registra un nuevo lote de mango en blockchain
+     * @dev Commits an evidence anchor on-chain.
+     * @param _rootHash    Merkle root or bundle hash (computed off-chain)
+     * @param _anchorType  Type of anchor (see AnchorType enum)
+     * @param _scope       keccak256(consignment_id) — identifies the case
+     * @param _version     Monotonically increasing version for this scope
      */
-    function registrarLote(
-        string memory _loteId,
-        string memory _productorName,
-        string memory _ubicacion,
-        string memory _variedad,
-        string memory _calidad,
-        uint256 _fechaCosecha,
-        string memory _metadata
-    ) external returns (bool) {
-        // Validaciones
-        require(bytes(_loteId).length > 0, "ID de lote requerido");
-        require(!loteIdExiste[_loteId], "Lote ID ya existe");
-        require(bytes(_productorName).length > 0, "Nombre de productor requerido");
-        require(bytes(_ubicacion).length > 0, "Ubicacion requerida");
-        require(_fechaCosecha <= block.timestamp, "Fecha de cosecha invalida");
-        
-        // Crear nuevo lote
-        LoteMango memory nuevoLote = LoteMango({
-            loteId: _loteId,
-            productor: msg.sender,
-            productorName: _productorName,
-            ubicacion: _ubicacion,
-            variedad: _variedad,
-            calidad: _calidad,
-            fechaCosecha: _fechaCosecha,
-            fechaRegistro: block.timestamp,
-            owner: msg.sender,
-            metadata: _metadata,
-            activo: true
+    function commitAnchor(
+        bytes32    _rootHash,
+        AnchorType _anchorType,
+        bytes32    _scope,
+        uint32     _version
+    )
+        external
+        onlyAuthorized
+        whenNotPaused
+        returns (uint256 anchorIndex)
+    {
+        require(_rootHash != bytes32(0), "Empty hash");
+        require(_version > latestVersion[_scope], "Version must increase");
+
+        Anchor memory a = Anchor({
+            rootHash:   _rootHash,
+            anchorType: _anchorType,
+            scope:      _scope,
+            version:    _version,
+            submitter:  msg.sender,
+            anchoredAt: uint64(block.timestamp)
         });
-        
-        // Almacenar en blockchain
-        lotes[_loteId] = nuevoLote;
-        loteIdExiste[_loteId] = true;
-        lotesPorProductor[msg.sender].push(_loteId);
-        totalLotes++;
-        
-        // Emitir evento
-        emit LoteRegistrado(
-            _loteId,
+
+        anchors[_scope][_version] = a;
+        latestVersion[_scope]     = _version;
+        hashExists[_rootHash]     = true;
+        totalAnchors++;
+
+        emit AnchorCommitted(
+            _scope,
+            _rootHash,
+            _anchorType,
+            _version,
             msg.sender,
-            _productorName,
-            _ubicacion,
-            _variedad,
-            _calidad,
-            block.timestamp
+            uint64(block.timestamp)
         );
-        
-        return true;
+
+        return totalAnchors;
     }
-    
+
+    // ============ VERIFICATION ============
+
     /**
-     * @dev Transfiere la propiedad de un lote
+     * @dev Verifies that a root hash was anchored on-chain.
+     *      Third party calls this with the hash from the evidence pack.
      */
-    function transferirPropiedad(
-        string memory _loteId,
-        address _nuevoOwner,
-        string memory _motivo,
-        string memory _comentario
-    ) external loteExiste(_loteId) esOwnerDelLote(_loteId) returns (bool) {
-        require(_nuevoOwner != address(0), "Direccion invalida");
-        require(_nuevoOwner != msg.sender, "No puedes transferir a ti mismo");
-        require(lotes[_loteId].activo, "Lote no esta activo");
-        
-        address previousOwner = lotes[_loteId].owner;
-        
-        // Actualizar owner
-        lotes[_loteId].owner = _nuevoOwner;
-        
-        // Registrar transferencia en historial
-        Transferencia memory nuevaTransferencia = Transferencia({
-            from: previousOwner,
-            to: _nuevoOwner,
-            timestamp: block.timestamp,
-            motivo: _motivo,
-            comentario: _comentario
-        });
-        
-        historialLotes[_loteId].push(nuevaTransferencia);
-        totalTransferencias++;
-        
-        // Emitir evento
-        emit PropiedadTransferida(
-            _loteId,
-            previousOwner,
-            _nuevoOwner,
-            _motivo,
-            block.timestamp
-        );
-        
-        return true;
+    function verifyHash(bytes32 _rootHash) external view returns (bool) {
+        return hashExists[_rootHash];
     }
-    
-    // ============ VIEW FUNCTIONS ============
-    
+
     /**
-     * @dev Obtiene información completa de un lote
+     * @dev Gets the latest anchor for a consignment scope.
      */
-    function obtenerLote(string memory _loteId) 
-        external 
-        view 
-        loteExiste(_loteId) 
+    function getLatestAnchor(bytes32 _scope)
+        external
+        view
         returns (
-            string memory,
-            address,
-            string memory,
-            string memory,
-            string memory,
-            string memory,
-            uint256,
-            uint256,
-            address,
-            string memory,
-            bool
-        ) 
+            bytes32  rootHash,
+            uint8    anchorType,
+            uint32   version,
+            address  submitter,
+            uint64   anchoredAt
+        )
     {
-        LoteMango memory lote = lotes[_loteId];
+        uint32 v = latestVersion[_scope];
+        require(v > 0, "No anchors for scope");
+        Anchor memory a = anchors[_scope][v];
         return (
-            lote.loteId,
-            lote.productor,
-            lote.productorName,
-            lote.ubicacion,
-            lote.variedad,
-            lote.calidad,
-            lote.fechaCosecha,
-            lote.fechaRegistro,
-            lote.owner,
-            lote.metadata,
-            lote.activo
+            a.rootHash,
+            uint8(a.anchorType),
+            a.version,
+            a.submitter,
+            a.anchoredAt
         );
     }
-    
+
     /**
-     * @dev Obtiene el historial completo de un lote
+     * @dev Gets a specific version anchor for a scope.
      */
-    function obtenerHistorial(string memory _loteId) 
-        external 
-        view 
-        loteExiste(_loteId) 
-        returns (Transferencia[] memory) 
+    function getAnchor(bytes32 _scope, uint32 _version)
+        external
+        view
+        returns (
+            bytes32  rootHash,
+            uint8    anchorType,
+            address  submitter,
+            uint64   anchoredAt
+        )
     {
-        return historialLotes[_loteId];
+        Anchor memory a = anchors[_scope][_version];
+        require(a.anchoredAt > 0, "Anchor not found");
+        return (
+            a.rootHash,
+            uint8(a.anchorType),
+            a.submitter,
+            a.anchoredAt
+        );
     }
-    
+
     /**
-     * @dev Verifica la autenticidad de un lote
+     * @dev Full verification: checks hash AND returns anchor metadata.
      */
-    function verificarLote(string memory _loteId) 
-        external 
-        view 
-        loteExiste(_loteId) 
-        returns (bool, string memory) 
+    function verifyAndGet(bytes32 _rootHash, bytes32 _scope, uint32 _version)
+        external
+        view
+        returns (
+            bool   valid,
+            uint8  anchorType,
+            address submitter,
+            uint64  anchoredAt
+        )
     {
-        LoteMango memory lote = lotes[_loteId];
-        
-        if (!lote.activo) {
-            return (false, "Lote no esta activo");
+        if (!hashExists[_rootHash]) {
+            return (false, 0, address(0), 0);
         }
-        
-        if (lote.productor == address(0)) {
-            return (false, "Productor invalido");
+        Anchor memory a = anchors[_scope][_version];
+        if (a.rootHash != _rootHash) {
+            return (false, 0, address(0), 0);
         }
-        
-        return (true, "Lote verificado correctamente");
+        return (true, uint8(a.anchorType), a.submitter, a.anchoredAt);
     }
-    
-    /**
-     * @dev Obtiene los lotes de un productor
-     */
-    function obtenerLotesPorProductor(address _productor) 
-        external 
-        view 
-        returns (string[] memory) 
+
+    // ============ ADMIN ============
+
+    function authorizeSubmitter(address _submitter, bool _authorized)
+        external
+        onlyOwner
     {
-        return lotesPorProductor[_productor];
+        authorizedSubmitters[_submitter] = _authorized;
+        emit SubmitterAuthorized(_submitter, _authorized);
     }
-    
-    /**
-     * @dev Obtiene información resumida del contrato
-     */
-    function obtenerEstadisticas() 
-        external 
-        view 
-        returns (uint256, uint256, uint256) 
-    {
-        return (totalLotes, totalTransferencias, block.timestamp);
+
+    function transferOwnership(address _newOwner) external onlyOwner {
+        require(_newOwner != address(0), "Zero address");
+        emit OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
     }
-    
-    // ============ ADMIN FUNCTIONS ============
-    
-    /**
-     * @dev Permite al owner desactivar un lote (solo en casos especiales)
-     */
-    function desactivarLote(string memory _loteId) 
-        external 
-        onlyOwner 
-        loteExiste(_loteId) 
-    {
-        lotes[_loteId].activo = false;
+
+    function pause() external onlyOwner {
+        paused = true;
+        emit Paused(msg.sender);
     }
-    
-    /**
-     * @dev Permite al owner activar un lote
-     */
-    function activarLote(string memory _loteId) 
-        external 
-        onlyOwner 
-        loteExiste(_loteId) 
-    {
-        lotes[_loteId].activo = true;
-    }
-    
-    /**
-     * @dev Transferir ownership del contrato (para upgrades)
-     */
-    function transferirOwnershipContrato(address _nuevoOwner) external onlyOwner {
-        require(_nuevoOwner != address(0), "Nuevo owner no puede ser address zero");
-        owner = _nuevoOwner;
-    }
-    
-    /**
-     * @dev Función de emergencia - solo para debugging en testnet
-     */
-    function emergencyStop() external onlyOwner {
-        // Esta función podría pausar el contrato en versiones futuras
-        emit ContratoActualizado(msg.sender, "EMERGENCY_STOP", block.timestamp);
+
+    function unpause() external onlyOwner {
+        paused = false;
+        emit Unpaused(msg.sender);
     }
 }

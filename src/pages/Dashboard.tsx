@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import {
@@ -11,6 +10,8 @@ import {
   Shield, Calendar, Leaf, DollarSign, Award, Truck, BarChart3,
 } from "lucide-react";
 import peruMap from "@/assets/peru-map.png";
+import { dashboardService } from "@/services/dashboardService";
+import { toast } from "sonner";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -82,13 +83,6 @@ const txt = {
   },
 };
 
-const DEMO_BATCHES = [
-  { batch_id: "MG-2025-001", producer_name: "Juan García", location: "Piura", variety: "Kent", quality: "Premium", status: "registered", total_kg: 500, price_per_kg: 2.80, created_at: "2025-12-01T10:00:00Z" },
-  { batch_id: "MG-2025-002", producer_name: "María López", location: "Lambayeque", variety: "Tommy Atkins", quality: "Exportación", status: "in_transit", total_kg: 300, price_per_kg: 2.50, created_at: "2025-12-05T14:00:00Z" },
-  { batch_id: "MG-2025-003", producer_name: "Carlos Ruiz", location: "Piura", variety: "Haden", quality: "Premium", status: "delivered", total_kg: 750, price_per_kg: 3.20, created_at: "2025-12-08T09:00:00Z" },
-  { batch_id: "MG-2025-004", producer_name: "Ana Torres", location: "Ica", variety: "Edward", quality: "Primera", status: "registered", total_kg: 200, price_per_kg: 2.00, created_at: "2025-12-10T16:00:00Z" },
-  { batch_id: "MG-2025-005", producer_name: "Pedro Flores", location: "Piura", variety: "Kent", quality: "Exportación", status: "in_transit", total_kg: 450, price_per_kg: 2.60, created_at: "2025-12-12T11:00:00Z" },
-];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -98,41 +92,53 @@ const Dashboard = () => {
 
   const [batches, setBatches] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalBatches: 0, producers: 0, orders: 0, regions: 0, totalKg: 0, avgPrice: 0 });
+  const [qualityDistribution, setQualityDistribution] = useState<any[]>([]);
+  const [locationDistribution, setLocationDistribution] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase.from("batches").select("*").order("created_at", { ascending: false }).limit(6);
-      const realBatches = data && data.length > 0 ? data : DEMO_BATCHES;
-      setBatches(realBatches);
+    const loadDashboard = async () => {
+      setIsLoading(true);
+      try {
+        // PASO 1: Obtener estadísticas generales
+        const statsResult = await dashboardService.getDashboardStats();
+        if (statsResult.success && statsResult.data) {
+          setStats({
+            totalBatches: statsResult.data.total_lots || 0,
+            producers: statsResult.data.total_producers || 0,
+            orders: statsResult.data.total_verifications || 0,
+            regions: 4, // Regiones fijas en Perú
+            totalKg: statsResult.data.total_kg || 0,
+            avgPrice: Math.round((statsResult.data.avg_price || 0) * 100) / 100,
+          });
+        }
 
-      const producers = new Set(realBatches.map((b: any) => b.producer_name));
-      const regions = new Set(realBatches.map((b: any) => b.location));
-      const { count } = await supabase.from("orders").select("*", { count: "exact", head: true });
-      const totalKg = realBatches.reduce((acc: number, b: any) => acc + (b.total_kg || 0), 0);
-      const prices = realBatches.filter((b: any) => b.price_per_kg).map((b: any) => b.price_per_kg);
-      const avgPrice = prices.length ? (prices.reduce((a: number, b: number) => a + b, 0) / prices.length) : 0;
+        // PASO 2: Obtener lotes recientes
+        const recentResult = await dashboardService.getRecentLots(6);
+        if (recentResult.success && recentResult.data) {
+          setBatches(recentResult.data);
+        }
 
-      setStats({
-        totalBatches: realBatches.length,
-        producers: producers.size,
-        orders: count || 0,
-        regions: regions.size,
-        totalKg,
-        avgPrice: Math.round(avgPrice * 100) / 100,
-      });
+        // PASO 3: Obtener distribución de calidad
+        const qualityResult = await dashboardService.getQualityDistribution();
+        if (qualityResult.success && qualityResult.data) {
+          setQualityDistribution(qualityResult.data);
+        }
+
+        // PASO 4: Obtener distribución de ubicación
+        const locationResult = await dashboardService.getLocationDistribution();
+        if (locationResult.success && locationResult.data) {
+          setLocationDistribution(locationResult.data);
+        }
+      } catch (error) {
+        console.error("Error cargando dashboard:", error);
+        toast.error("Error al cargar datos del dashboard");
+      } finally {
+        setIsLoading(false);
+      }
     };
-    load();
+    loadDashboard();
   }, []);
-
-  const qualityDistribution = (() => {
-    const counts: Record<string, number> = {};
-    batches.forEach((b) => { counts[b.quality] = (counts[b.quality] || 0) + 1; });
-    const total = batches.length || 1;
-    return Object.entries(counts).map(([label, count]) => ({
-      label,
-      percentage: Math.round((count / total) * 100),
-    }));
-  })();
 
   const qualityColors: Record<string, string> = {
     Premium: "bg-secondary",
@@ -344,17 +350,35 @@ const Dashboard = () => {
               <div className="flex flex-col md:flex-row items-center gap-6">
                 <img src={peruMap} alt="Peru Map" className="max-h-[200px] object-contain rounded-xl border border-border shadow-sm" />
                 <div className="grid grid-cols-2 gap-2.5 flex-1 w-full">
-                  {[
-                    { name: "Piura", pct: "68%", color: "bg-secondary/10 border-secondary/20 text-secondary" },
-                    { name: "Lambayeque", pct: "25%", color: "bg-accent/10 border-accent/20 text-accent-foreground" },
-                    { name: "Ica", pct: "4%", color: "bg-primary/10 border-primary/20 text-primary" },
-                    { name: "La Libertad", pct: "3%", color: "bg-muted border-border text-muted-foreground" },
-                  ].map((r) => (
-                    <div key={r.name} className={`p-3.5 rounded-xl border ${r.color}`}>
-                      <p className="font-bold text-xs">{r.name}</p>
-                      <p className="text-xl font-extrabold font-display">{r.pct}</p>
-                    </div>
-                  ))}
+                  {locationDistribution.length > 0 ? (
+                    locationDistribution.map((loc: any) => {
+                      const colorMap: Record<string, string> = {
+                        "Piura": "bg-secondary/10 border-secondary/20 text-secondary",
+                        "Lambayeque": "bg-accent/10 border-accent/20 text-accent-foreground",
+                        "Ica": "bg-primary/10 border-primary/20 text-primary",
+                        "La Libertad": "bg-muted border-border text-muted-foreground",
+                      };
+                      return (
+                        <div key={loc.location} className={`p-3.5 rounded-xl border ${colorMap[loc.location] || "bg-muted border-border text-muted-foreground"}`}>
+                          <p className="font-bold text-xs">{loc.location}</p>
+                          <p className="text-xl font-extrabold font-display">{loc.percentage}%</p>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    // Fallback si no hay datos
+                    [
+                      { name: "Piura", pct: "68%", color: "bg-secondary/10 border-secondary/20 text-secondary" },
+                      { name: "Lambayeque", pct: "25%", color: "bg-accent/10 border-accent/20 text-accent-foreground" },
+                      { name: "Ica", pct: "4%", color: "bg-primary/10 border-primary/20 text-primary" },
+                      { name: "La Libertad", pct: "3%", color: "bg-muted border-border text-muted-foreground" },
+                    ].map((r) => (
+                      <div key={r.name} className={`p-3.5 rounded-xl border ${r.color}`}>
+                        <p className="font-bold text-xs">{r.name}</p>
+                        <p className="text-xl font-extrabold font-display">{r.pct}</p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

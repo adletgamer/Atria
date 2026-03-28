@@ -1,0 +1,228 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "C:\\Users\\HP\\Documents\\Fadelk 2025\\VELOCITY\\MANGO TRACKER\\mango-rastreo-chain\\contracts\\MangoChainRegistry.sol": {
+      "lastModificationDate": 1763002624689,
+      "contentHash": "89069a62e9b6072e061844910c0cf641",
+      "sourceName": "contracts/MangoChainRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "MangoChainRegistry"
+      ]
+    },
+    "C:\\Users\\HP\\Documents\\Fadelk 2025\\VELOCITY\\MANGO TRACKER\\mango-rastreo-chain\\contracts\\MangoRegistry.sol": {
+      "lastModificationDate": 1765574392994,
+      "contentHash": "8881fee6762db353ae2a14cef79c20ee",
+      "sourceName": "contracts/MangoRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IVerification",
+        "MangoRegistry"
+      ]
+    },
+    "C:\\Users\\HP\\Documents\\Fadelk 2025\\VELOCITY\\MANGO TRACKER\\mango-rastreo-chain\\contracts\\MangoSupplyChain.sol": {
+      "lastModificationDate": 1770035726212,
+      "contentHash": "5af214e39d5aeb23f74c42a4d1a4e84a",
+      "sourceName": "contracts/MangoSupplyChain.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "MangoSupplyChain"
+      ]
+    },
+    "C:\\Users\\HP\\Documents\\Fadelk 2025\\VELOCITY\\MANGO TRACKER\\mango-rastreo-chain\\contracts\\QualityCertification.sol": {
+      "lastModificationDate": 1763945078782,
+      "contentHash": "07953c804a0f32fffd03ac222a0f4ecd",
+      "sourceName": "contracts/QualityCertification.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "QualityCertification"
+      ]
+    },
+    "C:\\Users\\HP\\Documents\\Fadelk 2025\\VELOCITY\\MANGO TRACKER\\mango-rastreo-chain\\contracts\\SupplyChainTracking.sol": {
+      "lastModificationDate": 1770037898819,
+      "contentHash": "064c57fb9a92763763c3dfd8572bbf5e",
+      "sourceName": "contracts/SupplyChainTracking.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "SupplyChainTracking"
+      ]
+    },
+    "C:\\Users\\HP\\Documents\\Fadelk 2025\\VELOCITY\\MANGO TRACKER\\mango-rastreo-chain\\contracts\\Verification.sol": {
+      "lastModificationDate": 1765574390835,
+      "contentHash": "b1c731c15cb49ce80c5e44b9e56c5e1c",
+      "sourceName": "contracts/Verification.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Verification"
+      ]
+    }
+  }
+}
