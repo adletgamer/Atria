@@ -17,6 +17,7 @@ import Marketplace from "./pages/Marketplace";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
+import Settings from "./pages/Settings";
 import Verify from "./pages/Verify";
 import QRTest from "./pages/QRTest";
 import NotFound from "./pages/NotFound";
@@ -32,7 +33,19 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <Routes>
+                  {/* Public Home */}
                   <Route path="/" element={<Index />} />
+
+                  {/* Authenticated App IA */}
+                  <Route path="/overview" element={<Dashboard />} />
+                  <Route path="/consignments" element={<Dashboard />} />
+                  <Route path="/evidence" element={<Rastrear />} />
+                  <Route path="/readiness" element={<Dashboard />} />
+                  <Route path="/verify-pack" element={<Rastrear />} />
+                  <Route path="/analytics" element={<Dashboard />} />
+                  <Route path="/settings" element={<Settings />} />
+
+                  {/* Legacy / compatibility routes */}
                   <Route path="/registrar" element={<Registrar />} />
                   <Route path="/rastrear" element={<Rastrear />} />
                   <Route path="/dashboard" element={<Dashboard />} />

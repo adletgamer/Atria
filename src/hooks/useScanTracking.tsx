@@ -1,4 +1,26 @@
-import { useState, useEffect } from "react";
+/**
+ * ⚠️ DEPRECATED - useScanTracking.tsx
+ * 
+ * Este hook está DEPRECADO desde Stage 1 (27 de marzo, 2026).
+ * 
+ * RAZÓN: localStorage ha sido eliminado. Todas las verificaciones se guardan en DB.
+ * 
+ * MIGRACIÓN:
+ * - logScan() → verificationService.createVerification()
+ * - getScanStats() → verificationService.getLotVerificationStats()
+ * - getBatchScans() → verificationService.getLotVerifications()
+ * 
+ * TIMELINE DE ELIMINACIÓN:
+ * - Sprint actual: Mantener para compatibilidad
+ * - Sprint +1: Eliminar completamente
+ * 
+ * TICKET: STAGE1-CLEANUP-002
+ * 
+ * ❌ NO USAR EN CÓDIGO NUEVO
+ * ✅ USAR: verificationService
+ */
+
+import { verificationService } from "@/services/verificationService";
 
 export interface ScanEvent {
     batchId: string;
@@ -15,96 +37,65 @@ export interface ScanStats {
     scansPerDay: { [key: string]: number };
 }
 
-const STORAGE_KEY = "mango_scan_events";
-
+/**
+ * @deprecated Usar verificationService.createVerification() en su lugar
+ * 
+ * Este hook ha sido reemplazado por verificationService que persiste
+ * todas las verificaciones en Supabase en lugar de localStorage.
+ */
 export const useScanTracking = () => {
-    const [scans, setScans] = useState<ScanEvent[]>([]);
+    console.warn(
+        "⚠️ DEPRECATED: useScanTracking hook está deprecado. Usa verificationService en su lugar."
+    );
 
-    // Load scans from localStorage on mount
-    useEffect(() => {
-        const loadScans = () => {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                try {
-                    setScans(JSON.parse(stored));
-                } catch (error) {
-                    console.error("Error loading scans:", error);
-                    setScans([]);
-                }
-            }
-        };
-        loadScans();
+    // Stub implementation para compatibilidad temporal
+    const logScan = async (batchId: string, verified: boolean = true) => {
+        console.warn(
+            "⚠️ DEPRECATED: logScan() está deprecado. Usa verificationService.createVerification() en su lugar."
+        );
 
-        // Listen for storage events to sync across tabs
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === STORAGE_KEY && e.newValue) {
-                setScans(JSON.parse(e.newValue));
-            }
-        };
-        window.addEventListener("storage", handleStorageChange);
-        return () => window.removeEventListener("storage", handleStorageChange);
-    }, []);
-
-    // Log a new scan event
-    const logScan = (batchId: string, verified: boolean = true) => {
-        const newScan: ScanEvent = {
-            batchId,
-            timestamp: new Date().toISOString(),
-            userAgent: navigator.userAgent,
-            verified,
-        };
-
-        const updatedScans = [newScan, ...scans];
-        setScans(updatedScans);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedScans));
+        if (verified) {
+            await verificationService.createVerification({
+                lot_id: batchId,
+                success: true,
+                user_agent: navigator.userAgent,
+                device_fingerprint: verificationService.generateDeviceFingerprint(),
+            });
+        } else {
+            await verificationService.createVerification({
+                lot_id: batchId,
+                success: false,
+                metadata: { reason: "verification_failed" },
+            });
+        }
     };
 
-    // Get aggregated statistics
     const getScanStats = (): ScanStats => {
-        const uniqueBatches = new Set(scans.map((s) => s.batchId)).size;
-
-        // Count scans per batch
-        const scansPerBatch: { [key: string]: number } = {};
-        scans.forEach((scan) => {
-            scansPerBatch[scan.batchId] = (scansPerBatch[scan.batchId] || 0) + 1;
-        });
-
-        // Count scans per day (last 7 days)
-        const scansPerDay: { [key: string]: number } = {};
-        const last7Days = Array.from({ length: 7 }, (_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            return date.toISOString().split("T")[0];
-        });
-
-        last7Days.forEach((day) => {
-            scansPerDay[day] = 0;
-        });
-
-        scans.forEach((scan) => {
-            const day = scan.timestamp.split("T")[0];
-            if (scansPerDay.hasOwnProperty(day)) {
-                scansPerDay[day]++;
-            }
-        });
+        console.warn(
+            "⚠️ DEPRECATED: getScanStats() está deprecado. Usa verificationService.getLotVerificationStats() en su lugar."
+        );
 
         return {
-            totalScans: scans.length,
-            uniqueBatches,
-            recentScans: scans.slice(0, 10), // Last 10 scans
-            scansPerBatch,
-            scansPerDay,
+            totalScans: 0,
+            uniqueBatches: 0,
+            recentScans: [],
+            scansPerBatch: {},
+            scansPerDay: {},
         };
     };
 
-    // Get recent scans with limit
     const getRecentScans = (limit: number = 5) => {
-        return scans.slice(0, limit);
+        console.warn(
+            "⚠️ DEPRECATED: getRecentScans() está deprecado. Usa verificationService.getLotVerifications() en su lugar."
+        );
+        return [];
     };
 
-    // Get scans for specific batch
     const getBatchScans = (batchId: string) => {
-        return scans.filter((scan) => scan.batchId === batchId);
+        console.warn(
+            "⚠️ DEPRECATED: getBatchScans() está deprecado. Usa verificationService.getLotVerifications() en su lugar."
+        );
+        return [];
     };
 
     return {
@@ -112,7 +103,7 @@ export const useScanTracking = () => {
         getScanStats,
         getRecentScans,
         getBatchScans,
-        scans,
+        scans: [],
     };
 };
 

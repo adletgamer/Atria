@@ -25,12 +25,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(data);
   };
 
+  const applyPendingSignupRole = async (userId: string) => {
+    const pendingRole = localStorage.getItem("pending_signup_role");
+    if (!pendingRole || !["agricultor", "exportador"].includes(pendingRole)) return;
+
+    const { error } = await (supabase as any)
+      .from("profiles")
+      .update({ role: pendingRole })
+      .eq("id", userId);
+
+    if (!error) {
+      localStorage.removeItem("pending_signup_role");
+    }
+  };
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => fetchProfile(session.user.id), 0);
+        setTimeout(async () => {
+          if (event === "SIGNED_IN") {
+            await applyPendingSignupRole(session.user.id);
+          }
+          await fetchProfile(session.user.id);
+        }, 0);
       } else {
         setProfile(null);
       }

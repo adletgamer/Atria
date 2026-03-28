@@ -1,4 +1,4 @@
-# 🥭 HarvestLink Protocol (MangoChain Pilot) - Tokenizing Agricultural Assets for Farmer Finance
+# 🥭 HarvestLink Protocol (MangoChain Pilot) - Supply chain for Farmers
 
 ![MangoChain](https://img.shields.io/badge/MangoChain-Blockchain%20Supply%20Chain-orange)
 ![Polygon](https://img.shields.io/badge/Polygon-Amoy%20Testnet-purple)

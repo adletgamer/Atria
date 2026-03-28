@@ -20,7 +20,7 @@ const content = {
     badge: "Primer piloto del Protocolo HarvestLink",
     subtitle: "Tokenizando cosechas futuras para dar liquidez y equidad a los agricultores peruanos",
     cta1: "Registrar Lote",
-    cta2: "Rastrear Lote",
+    cta2: "Verificar Pack",
     stats: [
       { value: "100%", label: "Transparente" },
       { value: "Polygon", label: "Blockchain" },
@@ -51,14 +51,14 @@ const content = {
     ctaTitle: "¿Listo para comenzar?",
     ctaDesc: "Únete a la revolución de la agricultura transparente y sostenible",
     ctaBtn1: "Ver Dashboard",
-    ctaBtn2: "Probar Rastreo",
+    ctaBtn2: "Verificar Pack",
     footer: "Desarrollado para agricultores peruanos con tecnología blockchain.",
   },
   en: {
     badge: "First pilot of the HarvestLink Protocol",
     subtitle: "Tokenizing future harvests for farmer liquidity & equity",
     cta1: "Register Batch",
-    cta2: "Track Batch",
+    cta2: "Verify Pack",
     stats: [
       { value: "100%", label: "Transparent" },
       { value: "Polygon", label: "Blockchain" },
@@ -89,7 +89,7 @@ const content = {
     ctaTitle: "Ready to Get Started?",
     ctaDesc: "Join the revolution of transparent and sustainable agriculture",
     ctaBtn1: "View Dashboard",
-    ctaBtn2: "Try Tracking",
+    ctaBtn2: "Verify Pack",
     footer: "Developed for Peruvian farmers with blockchain technology.",
   },
 };
@@ -137,7 +137,7 @@ const Index = () => {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Link to="/rastrear">
+                <Link to="/verify-pack">
                   <Button size="lg" variant="outline" className="border-2 border-white/25 text-white hover:bg-white/10 font-semibold px-8 py-6 rounded-2xl backdrop-blur-sm transition-all duration-300 text-base">
                     <Search className="mr-2 h-5 w-5" />
                     {t.cta2}
@@ -160,7 +160,7 @@ const Index = () => {
       </section>
 
       {/* How It Works - Premium Redesign */}
-      <section className="py-24 sm:py-32 relative overflow-hidden">
+      <section id="how-it-works" className="py-24 sm:py-32 relative overflow-hidden">
         {/* Subtle background pattern */}
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(hsl(var(--primary)) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
 
@@ -208,7 +208,7 @@ const Index = () => {
       </section>
 
       {/* Value Proposals */}
-      <section className="py-24 sm:py-32 bg-muted/50">
+      <section id="product" className="py-24 sm:py-32 bg-muted/50">
         <div className="container mx-auto px-4">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} className="text-center mb-20">
             <motion.p custom={0} variants={fadeUp} className="text-sm font-semibold uppercase tracking-widest text-secondary mb-3">{t.valueLabel}</motion.p>
@@ -286,7 +286,7 @@ const Index = () => {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/rastrear">
+              <Link to="/verify-pack">
                 <Button size="lg" variant="outline" className="border-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 font-semibold px-8 py-6 rounded-2xl transition-all duration-300 text-base">
                   {t.ctaBtn2}
                 </Button>

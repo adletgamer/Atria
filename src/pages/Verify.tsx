@@ -7,14 +7,14 @@ import {
     AlertCircle, ArrowLeft, Calendar, Loader2
 } from "lucide-react";
 import Timeline from "@/components/Timeline";
-import { useScanTracking } from "@/hooks/useScanTracking";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { lotService } from "@/services/lotService";
+import { trackingService } from "@/services/trackingService";
+import { verificationService } from "@/services/verificationService";
 
 const Verify = () => {
     const { batchId } = useParams<{ batchId: string }>();
     const navigate = useNavigate();
-    const { logScan } = useScanTracking();
     const [loteData, setLoteData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
@@ -29,32 +29,42 @@ const Verify = () => {
         setIsLoading(true);
 
         try {
-            const { data, error } = await supabase
-                .from("batches")
-                .select("*")
-                .eq("batch_id", id)
-                .single();
+            // PASO 1: Obtener lote desde DB
+            const lotResult = await lotService.getLotByLotId(id);
 
-            if (error || !data) {
+            if (!lotResult.success || !lotResult.data) {
                 setNotFound(true);
-                logScan(id, false);
-                setIsLoading(false);
+                
+                // PASO 2: Registrar verificación fallida
+                await verificationService.createVerification({
+                    lot_id: id,
+                    success: false,
+                    metadata: { reason: "lot_not_found" },
+                });
+                
                 return;
             }
 
+            const data = lotResult.data;
+
+            // PASO 3: Obtener timeline de eventos
+            const timelineResult = await trackingService.getLotTimeline(id);
+            const events = timelineResult.success ? timelineResult.data : [];
+
+            // PASO 4: Construir datos de timeline desde eventos reales
             const timelineData = {
-                loteId: data.batch_id,
+                loteId: data.lot_id,
                 productor: data.producer_name,
-                ubicacion: data.location,
-                calidad: data.quality,
-                hash: data.transaction_hash,
+                ubicacion: data.origin_location,
+                calidad: data.attributes?.quality || "Desconocida",
+                hash: data.lot_uuid,
                 timestamp: data.created_at,
-                variety: data.variety,
+                variety: data.attributes?.variety || "Desconocida",
                 steps: [
                     {
                         id: "1",
-                        title: `Producer - ${data.location}`,
-                        description: `Registered by ${data.producer_name}`,
+                        title: `Producer - ${data.origin_location}`,
+                        description: `Registered by ${data.producer_name || "Desconocido"}`,
                         date: new Date(data.created_at).toLocaleDateString("en-US"),
                         completed: true,
                         icon: User,
@@ -64,15 +74,15 @@ const Verify = () => {
                         title: "Exporter",
                         description: "In export process",
                         date: new Date(Date.now() + 86400000).toLocaleDateString("en-US"),
-                        completed: data.status === "in_transit" || data.status === "delivered",
-                        current: data.status === "registered",
+                        completed: false,
+                        current: true,
                         icon: Package,
                     },
                     {
                         id: "3",
                         title: "Supermarket - Lima",
                         description: "In distribution",
-                        completed: data.status === "delivered",
+                        completed: false,
                         icon: MapPin,
                     },
                     {
@@ -83,22 +93,42 @@ const Verify = () => {
                         icon: CheckCircle,
                     },
                 ],
+                events, // Incluir eventos para referencia
             };
 
             setLoteData(timelineData);
             setNotFound(false);
-            logScan(id, true);
 
-            toast.success(
-                <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="font-semibold">Batch verified successfully!</span>
-                </div>
-            );
+            // PASO 5: Registrar verificación exitosa
+            const verificationResult = await verificationService.createVerification({
+                lot_id: id,
+                success: true,
+                user_agent: navigator.userAgent,
+                device_fingerprint: verificationService.generateDeviceFingerprint(),
+                location_data: await verificationService.getGeolocation() || undefined,
+            });
+
+            // PASO 6: Actualizar trust_state automáticamente (vía trigger)
+            if (verificationResult.success) {
+                toast.success(
+                    <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="font-semibold">Batch verified successfully!</span>
+                    </div>
+                );
+            }
         } catch (err) {
             console.error("Verification error:", err);
             setNotFound(true);
-            logScan(id, false);
+            
+            // Registrar error de verificación
+            if (batchId) {
+                await verificationService.createVerification({
+                    lot_id: batchId,
+                    success: false,
+                    metadata: { error: String(err) },
+                });
+            }
         } finally {
             setIsLoading(false);
         }

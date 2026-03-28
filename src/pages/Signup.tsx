@@ -6,9 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
-import { Mail, Lock, User, Building, Leaf, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, Building, Leaf, ArrowRight, Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -64,6 +63,7 @@ const Signup = () => {
   const i = txt[lang];
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ fullName: "", email: "", password: "", company: "", role: "agricultor" });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,18 +72,26 @@ const Signup = () => {
       email: form.email,
       password: form.password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/overview`,
         data: { full_name: form.fullName, company_name: form.company, role: form.role },
       },
     });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     toast.success(i.checkEmail);
+    navigate("/login");
   };
 
   const handleGoogle = async () => {
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    localStorage.setItem("pending_signup_role", form.role);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/overview`,
+        queryParams: {
+          prompt: "select_account",
+        },
+      },
     });
     if (error) toast.error(error.message);
   };
@@ -130,8 +138,18 @@ const Signup = () => {
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-foreground flex items-center gap-2"><Lock className="h-3.5 w-3.5 text-primary" />{i.password}</Label>
-              <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="rounded-xl border-border bg-background h-12" required minLength={6} />
+              <div className="relative">
+                <Input type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  className="rounded-xl border-border bg-background h-12 pr-10" required minLength={6} />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-foreground flex items-center gap-2"><Building className="h-3.5 w-3.5 text-primary" />{i.company}</Label>
