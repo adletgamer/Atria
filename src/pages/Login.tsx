@@ -18,7 +18,7 @@ const fadeUp = {
 const txt = {
   es: {
     title: "Iniciar Sesión",
-    subtitle: "Accede al marketplace MangoChain",
+    subtitle: "Accede a la plataforma de evidencia y readiness",
     email: "Correo electrónico",
     password: "Contraseña",
     login: "Iniciar sesión",
@@ -30,7 +30,7 @@ const txt = {
   },
   en: {
     title: "Log In",
-    subtitle: "Access the MangoChain marketplace",
+    subtitle: "Access the evidence and readiness platform",
     email: "Email address",
     password: "Password",
     login: "Log in",
@@ -60,12 +60,19 @@ const Login = () => {
   };
 
   const handleGoogle = async () => {
+    // Store the intended redirect URL
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/login') {
+      sessionStorage.setItem('authRedirectTo', currentPath);
+    }
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/overview`,
+        redirectTo: `${window.location.origin}/auth/callback`,
         queryParams: {
           prompt: "select_account",
+          access_type: "offline",
         },
       },
     });

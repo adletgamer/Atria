@@ -5,6 +5,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 import type { ServiceResult, QRVerification } from "@/types/lot.types";
 import { EVENT_TYPES, EVENT_CATEGORIES } from "@/types/lot.types";
 import { trackingService } from "./trackingService";
@@ -62,7 +63,7 @@ export const verificationService = {
         .single();
 
       if (error) {
-        console.error("Error en createVerification:", error);
+        logger.error("verification.create_failed", {}, error);
         return {
           success: false,
           error: error.message,
@@ -91,7 +92,7 @@ export const verificationService = {
         data,
       };
     } catch (error: any) {
-      console.error("Exception en createVerification:", error);
+      logger.error("verification.create_exception", {}, error);
       return {
         success: false,
         error: error.message || "Error al registrar verificación",
@@ -127,7 +128,7 @@ export const verificationService = {
         .order("verified_at", { ascending: false });
 
       if (error) {
-        console.error("Error en getLotVerifications:", error);
+        logger.error("verification.list_failed", {}, error);
         return {
           success: false,
           error: error.message,
@@ -139,7 +140,7 @@ export const verificationService = {
         data: data || [],
       };
     } catch (error: any) {
-      console.error("Exception en getLotVerifications:", error);
+      logger.error("verification.list_exception", {}, error);
       return {
         success: false,
         error: error.message || "Error al obtener verificaciones",

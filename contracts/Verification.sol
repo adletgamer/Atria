@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// DEPRECATED — see MangoChainRegistry.sol
+pragma solidity ^0.8.20;
 
 /**
+ * @title Verification — DEPRECATED
+ * @notice Do NOT deploy. User verification via Supabase Auth + user_roles RLS.
  * @title Verification
  * @dev Contract for managing verified status of farmers and buyers
  */

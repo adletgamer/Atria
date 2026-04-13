@@ -8,7 +8,7 @@
 ## Paso 1: Ejecutar Migration en Supabase
 
 ### Opción A: Supabase CLI (Recomendado)
-
+ 
 ```bash
 # 1. Asegurarse de estar en el directorio del proyecto
 cd "c:\Users\HP\Documents\Fadelk 2025\VELOCITY\MANGO TRACKER\mango-rastreo-chain"

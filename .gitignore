@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel
+# Environment files — NEVER commit .env (contains private keys)
+.env
+.env.*
+!.env.example

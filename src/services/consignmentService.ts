@@ -7,6 +7,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 import type {
   ServiceResult,
   ConsignmentCase,
@@ -60,7 +61,7 @@ export const consignmentService = {
         });
 
       if (error) {
-        console.error("Error en createCase:", error);
+        logger.error("consignment.createCase_failed", {}, error);
         return { success: false, error: error.message };
       }
 
@@ -73,7 +74,7 @@ export const consignmentService = {
         },
       };
     } catch (error) {
-      console.error("Exception en createCase:", error);
+      logger.error("consignment.createCase_exception", {}, error);
       return { success: false, error: String(error) };
     }
   },
@@ -90,7 +91,7 @@ export const consignmentService = {
         });
 
       if (error) {
-        console.error("Error en getCaseByNumber:", error);
+        logger.error("consignment.getCaseByNumber_failed", {}, error);
         return { success: false, error: error.message };
       }
 
@@ -101,7 +102,7 @@ export const consignmentService = {
 
       return { success: true, data: row as ConsignmentWithDetails };
     } catch (error) {
-      console.error("Exception en getCaseByNumber:", error);
+      logger.error("consignment.getCaseByNumber_exception", {}, error);
       return { success: false, error: String(error) };
     }
   },
@@ -120,13 +121,13 @@ export const consignmentService = {
         .range(offset, offset + limit - 1);
 
       if (error) {
-        console.error("Error en getMyCases:", error);
+        logger.error("consignment.getMyCases_failed", {}, error);
         return { success: false, error: error.message };
       }
 
       return { success: true, data: (data || []) as ConsignmentCase[] };
     } catch (error) {
-      console.error("Exception en getMyCases:", error);
+      logger.error("consignment.getMyCases_exception", {}, error);
       return { success: false, error: String(error) };
     }
   },
@@ -186,7 +187,7 @@ export const consignmentService = {
         .single();
 
       if (error) {
-        console.error("Error en addLot:", error);
+        logger.error("consignment.addLot_failed", {}, error);
         if (error.code === "23505") {
           return { success: false, error: "Este lote ya está asignado a esta consignación" };
         }

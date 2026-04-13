@@ -1,68 +1,52 @@
 const { ethers } = require("hardhat");
 
+/**
+ * HarvestLink Protocol — Deployment Script
+ *
+ * Deploys ONE contract only: MangoChainRegistry
+ * All supply chain logic lives off-chain (Supabase).
+ * Only cryptographic hashes are anchored on-chain.
+ *
+ * Network: Polygon Amoy Testnet (chainId 80002)
+ * Usage:  npx hardhat run scripts/deploy.cjs --network amoy
+ */
 async function main() {
-  console.log("🚀 Iniciando deployment de contratos MangoChain (HarvestLink Protocol)...");
+  console.log("🚀 HarvestLink Protocol — Deploying MangoChainRegistry...\n");
 
   const [deployer] = await ethers.getSigners();
-  console.log(`📍 Desplegando desde: ${deployer.address}`);
+  console.log(`📍 Deployer: ${deployer.address}`);
 
   const balance = await ethers.provider.getBalance(deployer.address);
-  console.log(`💰 Balance: ${ethers.formatEther(balance)} MATIC`);
+  console.log(`💰 Balance: ${ethers.formatEther(balance)} MATIC\n`);
 
   if (balance === 0n) {
-    console.log("❌ Balance insuficiente. Obtén MATIC de prueba en:");
-    console.log("🔗 https://faucet.polygon.technology/");
-    return;
+    console.error("❌ Insufficient balance. Get test MATIC from:");
+    console.error("   https://faucet.polygon.technology/");
+    process.exit(1);
   }
 
-  // 1. Deploy Verification
-  console.log("📦 Compilando y desplegando Verification...");
-  const Verification = await ethers.getContractFactory("Verification");
-  const verification = await Verification.deploy();
-  await verification.waitForDeployment();
-  const verificationAddress = await verification.getAddress();
-  console.log(`✅ Verification desplegado en: ${verificationAddress}`);
+  // Deploy MangoChainRegistry — the ONLY active contract
+  console.log("📦 Deploying MangoChainRegistry...");
+  const MangoChainRegistry = await ethers.getContractFactory("MangoChainRegistry");
+  const registry = await MangoChainRegistry.deploy();
+  await registry.waitForDeployment();
 
-  // 2. Deploy MangoRegistry
-  console.log("📦 Compilando y desplegando MangoRegistry...");
-  const MangoRegistry = await ethers.getContractFactory("MangoRegistry");
-  const mangoRegistry = await MangoRegistry.deploy();
-  await mangoRegistry.waitForDeployment();
-  const mangoRegistryAddress = await mangoRegistry.getAddress();
-  console.log(`✅ MangoRegistry desplegado en: ${mangoRegistryAddress}`);
+  const address = await registry.getAddress();
+  const deployTx = registry.deploymentTransaction();
 
-  // 3. Link Verification to MangoRegistry
-  console.log("🔗 Vinculando Verification a MangoRegistry...");
-  const setTx = await mangoRegistry.setVerificationContract(verificationAddress);
-  await setTx.wait();
-  console.log("✅ MangoRegistry actualizado con Verification contract");
-
-  // 4. Deploy QualityCertification
-  console.log("📦 Compilando y desplegando QualityCertification...");
-  const QualityCertification = await ethers.getContractFactory("QualityCertification");
-  const qualityCertification = await QualityCertification.deploy();
-  await qualityCertification.waitForDeployment();
-  const qualityAddress = await qualityCertification.getAddress();
-  console.log(`✅ QualityCertification desplegado en: ${qualityAddress}`);
-
-  // 5. Deploy SupplyChainTracking
-  console.log("📦 Compilando y desplegando SupplyChainTracking...");
-  const SupplyChainTracking = await ethers.getContractFactory("SupplyChainTracking");
-  const supplyChainTracking = await SupplyChainTracking.deploy();
-  await supplyChainTracking.waitForDeployment();
-  const supplyAddress = await supplyChainTracking.getAddress();
-  console.log(`✅ SupplyChainTracking desplegado en: ${supplyAddress}`);
-
-  console.log("\n🎉 TODOS LOS CONTRATOS DESPLEGADOS EXITOSAMENTE!");
-  console.log(`📄 Verification: ${verificationAddress}`);
-  console.log(`📄 MangoRegistry: ${mangoRegistryAddress}`);
-  console.log(`📄 QualityCertification: ${qualityAddress}`);
-  console.log(`📄 SupplyChainTracking: ${supplyAddress}`);
-  console.log("\n🔍 Verificar en PolygonScan:");
-  console.log(`https://amoy.polygonscan.com/address/${mangoRegistryAddress}`);
+  console.log(`\n✅ MangoChainRegistry deployed!`);
+  console.log(`   Address:   ${address}`);
+  console.log(`   Tx hash:   ${deployTx?.hash}`);
+  console.log(`   Network:   Polygon Amoy (chainId 80002)`);
+  console.log(`\n🔍 View on PolygonScan:`);
+  console.log(`   https://amoy.polygonscan.com/address/${address}`);
+  console.log(`\n📋 Next steps:`);
+  console.log(`   1. Add to .env.local:  VITE_REGISTRY_CONTRACT_ADDRESS=${address}`);
+  console.log(`   2. Authorize system wallet:  authorizeSubmitter(<wallet_address>, true)`);
+  console.log(`   3. Verify contract on PolygonScan for public auditability`);
 }
 
 main().catch((error) => {
-  console.error("❌ Error:", error);
+  console.error("❌ Deployment failed:", error);
   process.exitCode = 1;
 });

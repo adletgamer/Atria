@@ -5,14 +5,8 @@ module.exports = {
   solidity: {
     compilers: [
       {
+        // Single canonical version — MangoChainRegistry.sol is the only active contract
         version: "0.8.20",
-        settings: {
-          viaIR: true,
-          optimizer: { enabled: true, runs: 200 },
-        },
-      },
-      {
-        version: "0.8.19",
         settings: {
           viaIR: true,
           optimizer: { enabled: true, runs: 200 },

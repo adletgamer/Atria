@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// DEPRECATED — see MangoChainRegistry.sol
+pragma solidity ^0.8.20;
 
 /**
+ * @title QualityCertification — DEPRECATED
+ * @notice Do NOT deploy. Certs stored off-chain + hashes anchored via MangoChainRegistry.sol.
  * @title QualityCertification
  * @dev Contract for quality certification of mango batches
  */

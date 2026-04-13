@@ -9,17 +9,20 @@ import wagmiConfig from "@/config/wagmi";
 import { queryClient } from "@/config/queryClient";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { AuthProvider } from "@/hooks/useAuth";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
-import Registrar from "./pages/Registrar";
 import Rastrear from "./pages/Rastrear";
 import Dashboard from "./pages/Dashboard";
-import Marketplace from "./pages/Marketplace";
+import Consignments from "./pages/Consignments";
+import ConsignmentWorkbench from "./pages/ConsignmentWorkbench";
+import Evidence from "./pages/Evidence";
+import Readiness from "./pages/Readiness";
+import Analytics from "./pages/Analytics";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
+import AuthCallback from "./pages/AuthCallback";
 import Settings from "./pages/Settings";
-import Verify from "./pages/Verify";
-import QRTest from "./pages/QRTest";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -33,28 +36,26 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <Routes>
-                  {/* Public Home */}
+                  {/* Public */}
                   <Route path="/" element={<Index />} />
-
-                  {/* Authenticated App IA */}
-                  <Route path="/overview" element={<Dashboard />} />
-                  <Route path="/consignments" element={<Dashboard />} />
-                  <Route path="/evidence" element={<Rastrear />} />
-                  <Route path="/readiness" element={<Dashboard />} />
                   <Route path="/verify-pack" element={<Rastrear />} />
-                  <Route path="/analytics" element={<Dashboard />} />
-                  <Route path="/settings" element={<Settings />} />
 
-                  {/* Legacy / compatibility routes */}
-                  <Route path="/registrar" element={<Registrar />} />
-                  <Route path="/rastrear" element={<Rastrear />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/marketplace" element={<Marketplace />} />
+                  {/* Auth */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/verify/:batchId" element={<Verify />} />
-                  <Route path="/qr-test" element={<QRTest />} />
+                  <Route path="/auth/callback" element={<AuthCallback />} />
+
+                  {/* Authenticated App */}
+                  <Route path="/overview" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/consignments" element={<ProtectedRoute><Consignments /></ProtectedRoute>} />
+                  <Route path="/consignments/:id" element={<ProtectedRoute><ConsignmentWorkbench /></ProtectedRoute>} />
+                  <Route path="/evidence" element={<ProtectedRoute><Evidence /></ProtectedRoute>} />
+                  <Route path="/readiness" element={<ProtectedRoute><Readiness /></ProtectedRoute>} />
+                  <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+
+                  {/* Fallback */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

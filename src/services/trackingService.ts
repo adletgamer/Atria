@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 import type { ServiceResult, TimelineEvent } from "@/types/lot.types";
 import { EVENT_TYPES, EVENT_CATEGORIES } from "@/types/lot.types";
 
@@ -36,7 +37,7 @@ export const trackingService = {
       });
 
       if (error) {
-        console.error("Error en createEvent:", error);
+        logger.error("tracking.createEvent_failed", {}, error);
         return {
           success: false,
           error: error.message,
@@ -47,7 +48,7 @@ export const trackingService = {
         success: true,
       };
     } catch (error: any) {
-      console.error("Exception en createEvent:", error);
+      logger.error("tracking.createEvent_exception", {}, error);
       return {
         success: false,
         error: error.message || "Error al crear evento",
@@ -65,7 +66,7 @@ export const trackingService = {
       });
 
       if (error) {
-        console.error("Error en get_lot_timeline:", error);
+        logger.error("tracking.getTimeline_failed", {}, error);
         return {
           success: false,
           error: error.message,
@@ -77,7 +78,7 @@ export const trackingService = {
         data: data || [],
       };
     } catch (error: any) {
-      console.error("Exception en getLotTimeline:", error);
+      logger.error("tracking.getTimeline_exception", {}, error);
       return {
         success: false,
         error: error.message || "Error al obtener timeline",
@@ -125,7 +126,7 @@ export const trackingService = {
         .order("occurred_at", { ascending: true });
 
       if (error) {
-        console.error("Error en getEventsByCategory:", error);
+        logger.error("tracking.getByCategory_failed", {}, error);
         return {
           success: false,
           error: error.message,
@@ -147,7 +148,7 @@ export const trackingService = {
         data: events,
       };
     } catch (error: any) {
-      console.error("Exception en getEventsByCategory:", error);
+      logger.error("tracking.getByCategory_exception", {}, error);
       return {
         success: false,
         error: error.message || "Error al obtener eventos",

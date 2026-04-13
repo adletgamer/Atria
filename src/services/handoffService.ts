@@ -7,6 +7,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 import type {
   ServiceResult,
   ConsignmentHandoff,
@@ -47,7 +48,7 @@ export const handoffService = {
         .single();
 
       if (error) {
-        console.error("Error en logHandoff:", error);
+        logger.error("handoff.log_failed", {}, error);
         return { success: false, error: error.message };
       }
 
@@ -156,7 +157,7 @@ export const handoffService = {
         .single();
 
       if (error) {
-        console.error("Error en raiseException:", error);
+        logger.error("handoff.raiseException_failed", {}, error);
         return { success: false, error: error.message };
       }
 

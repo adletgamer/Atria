@@ -38,7 +38,7 @@ const QRGenerator = ({
     const [copied, setCopied] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const qrRef = useRef<HTMLDivElement>(null);
-    const verificationUrl = `${window.location.origin}/verify/${batchId}`;
+    const verificationUrl = `${window.location.origin}/verify-pack?lote=${encodeURIComponent(batchId)}`;
 
     // Exportar datos del QR
     const qrData: QRDataExport = {

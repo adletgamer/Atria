@@ -5,6 +5,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 import type { ServiceResult } from "@/types/lot.types";
 
 export interface DashboardStats {
@@ -14,6 +15,8 @@ export interface DashboardStats {
   total_kg: number;
   avg_price: number;
   avg_trust_score: number;
+  evidence_completeness: number;
+  custody_continuity: number;
 }
 
 export interface QualityDistribution {
@@ -26,6 +29,15 @@ export interface LocationDistribution {
   location: string;
   count: number;
   percentage: number;
+}
+
+export interface AnchoringStats {
+  total_proofs: number;
+  anchored_count: number;
+  verified_count: number;
+  pending_count: number;
+  failed_count: number;
+  last_anchored_at: string | null;
 }
 
 export const dashboardService = {
@@ -46,7 +58,7 @@ export const dashboardService = {
         );
 
       if (lotsError) {
-        console.error("Error en getDashboardStats:", lotsError);
+        logger.error("dashboard.stats_failed", {}, lotsError);
         return {
           success: false,
           error: lotsError.message,
@@ -99,6 +111,33 @@ export const dashboardService = {
             ) / (trustStates || []).length
           : 0;
 
+      // Compute evidence completeness: % of lots with ≥3 key attributes (variety, quality, total_kg)
+      const REQUIRED_ATTRS = ['variety', 'quality', 'total_kg'];
+      let completeLots = 0;
+      (lots || []).forEach((lot: any) => {
+        const keys = (lot.lot_attributes || []).map((a: any) => a.attribute_key);
+        const present = REQUIRED_ATTRS.filter((k) => keys.includes(k)).length;
+        if (present >= REQUIRED_ATTRS.length) completeLots++;
+      });
+      const evidenceCompleteness = (lots || []).length > 0
+        ? Math.round((completeLots / (lots || []).length) * 100)
+        : 0;
+
+      // Compute custody continuity: % of lots that have ≥2 events (created + at least one more)
+      const { data: eventCounts } = await supabase
+        .from('lot_events')
+        .select('lot_id');
+      const eventsPerLot: Record<string, number> = {};
+      (eventCounts || []).forEach((e: any) => {
+        eventsPerLot[e.lot_id] = (eventsPerLot[e.lot_id] || 0) + 1;
+      });
+      const lotsWithContinuity = (lots || []).filter(
+        (lot: any) => (eventsPerLot[lot.id] || 0) >= 2
+      ).length;
+      const custodyContinuity = (lots || []).length > 0
+        ? Math.round((lotsWithContinuity / (lots || []).length) * 100)
+        : 0;
+
       return {
         success: true,
         data: {
@@ -108,10 +147,12 @@ export const dashboardService = {
           total_kg: Math.round(totalKg * 100) / 100,
           avg_price: priceCount > 0 ? Math.round((totalPrice / priceCount) * 100) / 100 : 0,
           avg_trust_score: Math.round(avgTrustScore * 100) / 100,
+          evidence_completeness: evidenceCompleteness,
+          custody_continuity: custodyContinuity,
         },
       };
     } catch (error: any) {
-      console.error("Exception en getDashboardStats:", error);
+      logger.error("dashboard.stats_exception", {}, error);
       return {
         success: false,
         error: error.message || "Error al obtener estadísticas",
@@ -351,6 +392,44 @@ export const dashboardService = {
         success: false,
         error: error.message || "Error al obtener estadísticas del productor",
       };
+    }
+  },
+
+  /**
+   * Get anchoring statistics for the network health section.
+   */
+  async getAnchoringStats(): Promise<ServiceResult<AnchoringStats>> {
+    try {
+      const { data: proofs, error } = await supabase
+        .from("trust_proofs")
+        .select("status, anchored_at, consensus_timestamp");
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      const all = proofs || [];
+      const anchored = all.filter((p: any) => p.status === 'anchored' || p.status === 'verified');
+      const verified = all.filter((p: any) => p.status === 'verified');
+      const pending = all.filter((p: any) => p.status === 'pending' || p.status === 'pending_anchor');
+      const failed = all.filter((p: any) => p.status === 'failed');
+
+      return {
+        success: true,
+        data: {
+          total_proofs: all.length,
+          anchored_count: anchored.length,
+          verified_count: verified.length,
+          pending_count: pending.length,
+          failed_count: failed.length,
+          last_anchored_at: anchored.length > 0
+            ? anchored.sort((a: any, b: any) => new Date(b.anchored_at).getTime() - new Date(a.anchored_at).getTime())[0].anchored_at
+            : null,
+        },
+      };
+    } catch (error: any) {
+      logger.error("dashboard.getAnchoringStats_failed", {}, error);
+      return { success: false, error: error.message };
     }
   },
 };

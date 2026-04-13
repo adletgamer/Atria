@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
+// DEPRECATED — see MangoChainRegistry.sol
 pragma solidity ^0.8.20;
 
 /**
+ * @title MangoSupplyChain — DEPRECATED
+ * @notice Do NOT deploy. Logic migrated to Supabase + MangoChainRegistry.sol.
  * @title MangoSupplyChain
  * @dev Contract for registering and tracking mango batches with variety support
  * @notice This contract manages the complete lifecycle of mango batches
