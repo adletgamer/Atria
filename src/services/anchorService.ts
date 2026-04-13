@@ -14,6 +14,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 import { evidenceService } from "./evidenceService";
 import type {
   ServiceResult,
@@ -118,7 +119,7 @@ export const anchorService = {
         .single();
 
       if (error) {
-        console.error("Error creating anchor:", error);
+        logger.error("anchor.create_failed", {}, error);
         return { success: false, error: error.message };
       }
 
@@ -284,7 +285,7 @@ export const anchorService = {
       // Check for ethereum provider (MetaMask)
       const ethereum = (window as any).ethereum;
       if (!ethereum) {
-        console.warn("No ethereum provider found. Anchor saved off-chain only.");
+        logger.warn("anchor.no_ethereum_provider", {});
         return null;
       }
 
@@ -320,7 +321,7 @@ export const anchorService = {
       const receipt = await tx.wait();
       return receipt.hash;
     } catch (error) {
-      console.error("On-chain anchor failed:", error);
+      logger.error("anchor.onchain_failed", {}, error);
       return null;
     }
   },

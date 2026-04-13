@@ -7,6 +7,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 import type {
   ServiceResult,
   ConsignmentDocument,
@@ -44,7 +45,7 @@ export const documentService = {
         .single();
 
       if (error) {
-        console.error("Error en uploadDocument:", error);
+        logger.error("document.upload_failed", {}, error);
         return { success: false, error: error.message };
       }
 
@@ -199,7 +200,7 @@ export const documentService = {
         .single();
 
       if (error) {
-        console.error("Error en createAttestation:", error);
+        logger.error("document.createAttestation_failed", {}, error);
         return { success: false, error: error.message };
       }
 

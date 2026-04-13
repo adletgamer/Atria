@@ -9,6 +9,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 import type {
   ServiceResult,
   EvidenceObject,
@@ -62,7 +63,7 @@ export const evidenceService = {
         .single();
 
       if (error) {
-        console.error("Error creating evidence:", error);
+        logger.error("evidence.create_failed", {}, error);
         return { success: false, error: error.message };
       }
 
@@ -138,7 +139,7 @@ export const evidenceService = {
         });
 
       if (error) {
-        console.error("Error transitioning state:", error);
+        logger.error("evidence.transitionState_failed", {}, error);
         return { success: false, error: error.message };
       }
 
@@ -304,10 +305,22 @@ export const evidenceService = {
   },
 
   /**
-   * Computes SHA-256 of a File/Blob (for evidence object creation).
+   * Computes SHA-256 of a File/Blob.
+   * Uses arrayBuffer() when available, falls back to FileReader for older environments.
    */
   async hashFile(file: File | Blob): Promise<string> {
-    const buffer = await file.arrayBuffer();
+    let buffer: ArrayBuffer;
+    if (typeof file.arrayBuffer === "function") {
+      buffer = await file.arrayBuffer();
+    } else {
+      // Fallback: use FileReader
+      buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as ArrayBuffer);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(file);
+      });
+    }
     const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -334,44 +347,57 @@ export const evidenceService = {
 
   /**
    * Uploads a file to Supabase Storage and returns an evidence object.
-   * Computes content_hash before upload for integrity.
+   * Accepts a single payload object that includes the file.
+   * The file is hashed client-side before upload for integrity.
    */
   async uploadAndCreateEvidence(
-    file: File,
-    payload: Omit<CreateEvidencePayload, "content_hash" | "storage_uri" | "file_size_bytes" | "mime_type">,
+    payload: Omit<CreateEvidencePayload, "content_hash" | "storage_uri" | "file_size_bytes" | "mime_type"> & { file: File },
     storageBucket: string = "evidence"
   ): Promise<ServiceResult<EvidenceObject>> {
     try {
-      // 1. Compute content hash
+      const { file, ...rest } = payload;
+
+      if (!file || !(file instanceof File)) {
+        return { success: false, error: "A valid File object is required" };
+      }
+
+      // 1. Compute content hash before upload
       const contentHash = await this.hashFile(file);
 
       // 2. Upload to Supabase Storage
-      const filePath = `${payload.consignment_id || "unlinked"}/${contentHash}-${file.name}`;
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const filePath = `${rest.consignment_id || "unlinked"}/${contentHash.slice(0, 12)}-${sanitizedName}`;
+
       const { error: uploadError } = await supabase.storage
         .from(storageBucket)
         .upload(filePath, file, {
-          contentType: file.type,
+          contentType: file.type || "application/octet-stream",
           upsert: false,
         });
 
       if (uploadError) {
-        return { success: false, error: `Upload failed: ${uploadError.message}` };
+        // If file already exists with same hash, that's fine — it's the same content
+        if (!uploadError.message.includes("already exists")) {
+          logger.error("evidence.storage_upload_failed", { filePath }, uploadError);
+          return { success: false, error: `Storage upload failed: ${uploadError.message}` };
+        }
       }
 
-      // 3. Get public/signed URL
+      // 3. Get public URL
       const { data: urlData } = supabase.storage
         .from(storageBucket)
         .getPublicUrl(filePath);
 
-      // 4. Create evidence object
+      // 4. Create the evidence_objects record
       return await this.createEvidence({
-        ...payload,
+        ...rest,
         content_hash: contentHash,
         storage_uri: urlData.publicUrl,
         file_size_bytes: file.size,
-        mime_type: file.type,
+        mime_type: file.type || "application/octet-stream",
       });
     } catch (error) {
+      logger.error("evidence.uploadAndCreate_exception", {}, error);
       return { success: false, error: String(error) };
     }
   },

@@ -19,7 +19,7 @@ const fadeUp = {
 const txt = {
   es: {
     title: "Crear Cuenta",
-    subtitle: "Únete al marketplace de mangos peruanos",
+    subtitle: "Únete a la plataforma de consignaciones, evidencia y readiness",
     fullName: "Nombre completo",
     email: "Correo electrónico",
     password: "Contraseña",
@@ -38,7 +38,7 @@ const txt = {
   },
   en: {
     title: "Create Account",
-    subtitle: "Join the Peruvian mango marketplace",
+    subtitle: "Join the consignment, evidence and readiness platform",
     fullName: "Full name",
     email: "Email address",
     password: "Password",

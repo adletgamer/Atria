@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// DEPRECATED — see MangoChainRegistry.sol
+pragma solidity ^0.8.20;
 
 /**
+ * @title MangoRegistry — DEPRECATED
+ * @notice Do NOT deploy. Functionality moved to Supabase + MangoChainRegistry.sol.
  * @title MangoRegistry
  * @dev Main contract for registering mango batches on the blockchain
  */

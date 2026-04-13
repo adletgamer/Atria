@@ -1,0 +1,115 @@
+# Mango Rastreo Chain — Windsurf Project Rules
+# These rules apply to ALL Cascade interactions in this workspace.
+
+## Product Identity
+
+- **Internal name:** Consignment Readiness Engine
+- **What it does:** Takes a consignment and converts dispersed evidence into: computed state, visible exceptions, use-case readiness, verifiable evidence pack.
+- **What it does NOT do:** consumer scan, marketplace, decorative trust score, multi-crop expansion.
+
+## Architecture Rules
+
+### Data
+- **Single source of truth:** Supabase PostgreSQL. No localStorage for business data. No mock data in runtime.
+- **Unit of work:** `consignment_case`, not `lot`. Lots are evidence containers grouped under consignments.
+- **Append-only events:** `lot_events`, `consignment_events`, `state_transitions` are immutable. No UPDATE/DELETE.
+- **Atomic transactions:** Use RPC functions for multi-table inserts. Never do multi-step inserts from the client.
+- **EAV pattern:** `lot_attributes` for lot properties. `evidence_objects` for consignment evidence. Do not add columns for data that varies per instance.
+
+### Services
+- All services return `ServiceResult<T>`: `{ success: boolean; data?: T; error?: string }`.
+- Services never throw. All exceptions are caught internally and returned as `{ success: false, error }`.
+- Use `logger` from `@/utils/logger.ts` instead of raw `console.log/error/warn`.
+- One service per domain: `consignmentService`, `evidenceService`, `attestationService`, `exceptionService`, `stateEngineService`, `evidencePackService`, `signerService`.
+
+### Frontend
+- React + TypeScript + Vite + TailwindCSS + shadcn/ui.
+- Path alias: `@/` maps to `./src/`.
+- No parallel/V2 pages. One version of each screen.
+- No page imports legacy services (`batchService`, `useScanTracking`). Those live in `/src/legacy/` for reference only.
+- Icons: `lucide-react`.
+- i18n: `src/config/i18n.ts` with `es`/`en` support.
+
+### Blockchain / Signing
+- **Backend-first smart wallet.** No MetaMask UX for the user.
+- System signs snapshot hashes and evidence pack hashes.
+- Interface: `SignerService { signSnapshot, signEvidencePack, verifyAnchor }`.
+- Chain adapter pattern: swap chains without changing service consumers.
+- Smart contract: `MangoChainRegistry.sol` — evidence anchoring only, no data on-chain.
+
+### Testing
+- Framework: Vitest.
+- Mock Supabase with `vi.hoisted()` + `vi.mock("@/integrations/supabase/client")`.
+- Test files: `src/__tests__/services/<service>.test.ts`.
+- Never delete or weaken existing tests without explicit direction.
+
+### Migrations
+- Location: `supabase/migrations/`.
+- Naming: `YYYYMMDDHHMMSS_description.sql`.
+- Always include `ENABLE ROW LEVEL SECURITY` for new tables.
+- Always include RLS policies in the same migration that creates the table.
+- Legacy migrations live in `src/legacy/`.
+
+## Forbidden Patterns
+
+- ❌ `DEMO_` prefixed data in runtime code
+- ❌ `localStorage` for business/functional data (OK for: lang preference, wallet connection, session)
+- ❌ Importing from `@/services/batchService` or `@/hooks/useScanTracking` in core code
+- ❌ Hardcoded fallback data in pages (show empty/loading state instead)
+- ❌ Frontend-computed business metrics (compute in DB or service, not in component)
+- ❌ `console.log` / `console.error` in services (use `logger` from `@/utils/logger.ts`)
+- ❌ Smart wallet / MetaMask as user-facing UX in MVP
+- ❌ Two separate apps/routes for compliance vs financing (same snapshot, different lens)
+
+## MVP Output Contract
+
+A consignment produces exactly these outputs:
+```
+readiness_status          — enum: not_ready | partial | ready
+blocking_exceptions       — Exception[]
+evidence_completeness     — 0-100 score
+attribution_strength      — 0-100 score  
+custody_continuity        — 0-100 score
+evidence_pack_hash        — SHA-256 of serialized pack
+decision_readiness_import — boolean
+decision_readiness_financing — boolean
+```
+
+NOT a "timeline". NOT a "dashboard". The product computes decision state.
+
+## Key Tables (Stage 2)
+
+| Table | Purpose |
+|-------|---------|
+| `consignment_cases` | Operational unit grouping lots |
+| `consignment_lots` | Junction: consignment ↔ lot |
+| `evidence_objects` | First-class evidence with hash, type, source |
+| `attestations` | Attributed claims by specific actors |
+| `exceptions` | Blocking/warning decision blockers |
+| `state_snapshots` | Point-in-time computed state |
+| `actors` | People/orgs in the chain |
+| `actor_roles` | Per-consignment role assignments |
+
+## File Structure
+
+```
+src/
+  services/          — domain services (one per entity)
+  pages/             — route-level components
+  components/        — shared UI components
+  hooks/             — React hooks
+  types/             — TypeScript interfaces
+  utils/             — logger, helpers
+  config/            — i18n, constants
+  legacy/            — deprecated files (do not import)
+  __tests__/         — Vitest test suites
+    services/        — service unit tests
+    mocks/           — shared mocks
+supabase/
+  migrations/        — SQL migrations
+  seed.sql           — demo data
+docs/                — architecture, audit, closeout docs
+contracts/           — Solidity smart contracts
+.windsurf/
+  workflows/         — reusable agent workflows
+```

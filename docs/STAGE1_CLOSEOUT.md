@@ -1,317 +1,172 @@
-# Stage 1 - Cierre Formal
+# Stage 1 — Formal Closeout
 
-**Fecha de Cierre:** 27 de marzo, 2026  
-**Versión:** 1.0  
-**Estado:** ✅ CERRADO
-
----
-
-## 📋 Resumen de Cierre
-
-### Qué se Cerró
-
-**Schema Normalizado Completado:**
-- ✅ 5 tablas: lots, lot_attributes, lot_events, trust_states, qr_verifications
-- ✅ 3 funciones RPC: create_lot_complete, get_lot_timeline, get_lot_with_details
-- ✅ 8 triggers automáticos
-- ✅ 2 vistas materializadas
-- ✅ RLS policies en todas las tablas
-
-**Servicios Implementados:**
-- ✅ lotService.ts (350 líneas)
-- ✅ trackingService.ts (270 líneas)
-- ✅ verificationService.ts (290 líneas)
-- ✅ dashboardService.ts (340 líneas)
-
-**Páginas Refactorizadas:**
-- ✅ Registrar.tsx - Usa lotService.createLot()
-- ✅ Rastrear.tsx - Usa lotService + trackingService
-- ✅ Verify.tsx - Usa verificationService
-- ✅ Dashboard.tsx - Usa dashboardService
-
-**Limpieza Legacy:**
-- ✅ DEMO_BATCHES eliminado
-- ✅ DEMO_DATA eliminado
-- ✅ localStorage eliminado (excepto wallet connection)
-- ✅ batchService.ts deprecado con wrappers
-- ✅ useScanTracking.tsx deprecado con wrappers
-
-**Documentación:**
-- ✅ stage_1_runtime_audit.md
-- ✅ stage_1_core_schema.md
-- ✅ workstream_registrar_refactor.md
-- ✅ migration_execution_guide.md
-- ✅ IMPLEMENTATION_SUMMARY_STAGE1.md
-- ✅ REFACTORING_COMPLETION_REPORT.md
-- ✅ STAGE1_E2E_VALIDATION.md
-- ✅ STAGE1_CLOSEOUT.md (este documento)
+**Close Date:** 2026-03-29
+**Version:** 2.0
+**Status:** CLOSED
 
 ---
 
-## 🚫 Qué Queda Fuera
+## 1. What Was Closed
 
-### Deliberadamente Excluido
+### Database Schema (5 tables, fully operational)
 
-1. **Blockchain Real**
-   - Stage 1 usa Supabase como fuente única de verdad
-   - Integración blockchain será Stage 2
-   - Hash de transacción es UUID, no hash real
+| Table | Purpose | Rows per lot |
+|-------|---------|--------------|
+| `lots` | Core identity — immutable lot_id, producer, location | 1 |
+| `lot_attributes` | Mutable properties (EAV) — variety, quality, kg, price | N |
+| `lot_events` | Append-only timeline — lifecycle, attribute changes, verifications | N |
+| `trust_states` | Computed trust score — auto-updated by triggers | 1 |
+| `qr_verifications` | QR scan records — device, location, success flag | N |
 
-2. **Trust Score Sofisticado**
-   - Score inicial: 10.00
-   - Incremento por verificación: +2.00
-   - Lógica compleja será Stage 2
+### RPC Functions (3)
+- **`create_lot_complete`** — atomic lot creation (lots + attributes + event + trust_state)
+- **`get_lot_timeline`** — full event timeline with actor names
+- **`get_lot_with_details`** — lot + attributes + trust_state in one call
 
-3. **Marketplace Avanzado**
-   - Solo flag `is_listed` en atributos
-   - Órdenes y transacciones serán Stage 2
+### Triggers (4 active)
+- `update_lots_updated_at` — auto-update `updated_at` on lots
+- `update_lot_attributes_updated_at` — same for attributes
+- `trigger_create_initial_lot_event` — auto-create `lot.created` event
+- `trigger_create_initial_trust_state` — auto-create trust_state with score 10.00
+- `trigger_update_trust_on_verification` — +2.00 trust on successful QR verification
 
-4. **Certificaciones**
-   - No implementadas en Stage 1
-   - Será tabla separada en Stage 2
+### Services (4 core, operational)
 
-5. **Custody Tracking**
-   - Timeline básica en Stage 1
-   - Custody completo será Stage 2
+| Service | Lines | Consumes |
+|---------|-------|----------|
+| `lotService.ts` | 374 | `create_lot_complete`, `get_lot_with_details`, direct queries |
+| `trackingService.ts` | 271 | `get_lot_timeline`, `lot_events` insert |
+| `verificationService.ts` | 339 | `qr_verifications` insert, trust_state auto-update |
+| `dashboardService.ts` | 380+ | Aggregations across lots, attributes, events, trust_states |
 
----
+### Pages (4 refactored, consuming new schema exclusively)
+- **Dashboard.tsx** — `dashboardService.getDashboardStats/getRecentLots/getQualityDistribution/getLocationDistribution`
+- **Rastrear.tsx** — `lotService.getLotByLotId` + `trackingService.getLotTimeline`
+- **Registration flow** — `lotService.createLot`
+- **Verification flow** — `verificationService.createVerification`
 
-## ⚠️ Deuda Residual
+### Legacy Cleanup (completed 2026-03-29)
+- `batchService.ts` → moved to `/src/legacy/`
+- `useScanTracking.tsx` → moved to `/src/legacy/`
+- `create_batch_tables.sql` → moved to `/src/legacy/`
+- All `DEMO_BATCHES` / `DEMO_DATA` arrays → removed (none found in runtime)
+- Dashboard hardcoded fallback location data → replaced with empty state
+- Dashboard fake Evidence Completeness / Custody Continuity calculations → replaced with real computed values from DB
 
-### Técnica
-
-| Item | Prioridad | Acción |
-|------|-----------|--------|
-| batchService.ts deprecado | Media | Eliminar en Sprint +2 |
-| useScanTracking.tsx deprecado | Media | Eliminar en Sprint +1 |
-| useMetaMask localStorage | Baja | Migrar a sessionStorage en Stage 2 |
-| Dashboard fallback data | Baja | Remover cuando haya datos reales |
-
-### Testing
-
-| Item | Prioridad | Acción |
-|------|-----------|--------|
-| Unit tests para servicios | Alta | Implementar en Sprint +1 |
-| Integration tests E2E | Alta | Implementar en Sprint +1 |
-| Performance tests | Media | Implementar en Sprint +2 |
-| Security audit | Alta | Realizar antes de producción |
-
-### Documentación
-
-| Item | Prioridad | Acción |
-|------|-----------|--------|
-| API docs para servicios | Media | Generar en Sprint +1 |
-| Troubleshooting guide | Baja | Crear cuando haya issues |
-| Performance benchmarks | Baja | Medir en Sprint +2 |
+### RLS Audit (completed 2026-03-29)
+- `trust_states` client INSERT/UPDATE policies → removed (system-only via triggers)
+- All SELECT policies reviewed — see `docs/STAGE1_RLS_AUDIT.md`
+- Migration: `20260329000000_rls_audit_tighten.sql`
 
 ---
 
-## 🎯 Decisiones Arquitectónicas Finales
+## 2. What Was Deliberately Left Out
 
-### 1. Supabase es la Única Fuente de Verdad
-
-**Decisión:** ✅ CONFIRMADA
-
-```
-Frontend → Supabase DB (única fuente de verdad)
-         ↓
-         RPC functions (lógica transaccional)
-         ↓
-         Triggers (actualizaciones automáticas)
-```
-
-**Implicaciones:**
-- No hay caché local de datos críticos
-- localStorage solo para preferencias UI
-- Todas las operaciones son transaccionales
-- Rollback automático en errores
-
-**Ventajas:**
-- Consistencia garantizada
-- Auditoría completa
-- Escalabilidad
-- Seguridad
-
-**Desventajas:**
-- Latencia de red
-- Dependencia de Supabase
-- Requiere conexión activa
-
-### 2. Runtime Legacy Está Congelado
-
-**Decisión:** ✅ CONFIRMADA
-
-**Qué significa:**
-- batchService.ts no recibe nuevas features
-- useScanTracking.tsx no recibe nuevas features
-- Tabla `batches` no recibe nuevas columnas
-- Código legacy solo recibe fixes críticos
-
-**Timeline:**
-- Sprint actual: Mantener para compatibilidad
-- Sprint +1: Marcar como @deprecated
-- Sprint +2: Eliminar completamente
-
-**Razón:**
-- Evitar divergencia de datos
-- Forzar migración a nuevos servicios
-- Simplificar mantenimiento
-
-### 3. Transacciones Atómicas vía RPC
-
-**Decisión:** ✅ CONFIRMADA
-
-**Implementación:**
-```sql
--- create_lot_complete() crea:
-1. lots (1 row)
-2. lot_attributes (8 rows)
-3. lot_events (1 row)
-4. trust_states (1 row)
--- TODO: Rollback automático si falla
-```
-
-**Ventajas:**
-- Garantiza consistencia
-- Sin datos huérfanos
-- Auditoría completa
-
-**Limitaciones:**
-- No soporta transacciones distribuidas
-- Blockchain será Stage 2
+| Item | Reason | Stage 2 Path |
+|------|--------|--------------|
+| Blockchain integration | Stage 1 = data model. Blockchain = integrity layer on top. | `anchorService.ts` already scaffolded |
+| Sophisticated trust scoring | Current: +2/verification. Needs evidence dimensions. | `complianceService.ts` has evidence completeness model |
+| ConsignmentCase grouping | Lots are the unit in Stage 1. Consignments are Stage 2. | `consignment_cases` table already in migration |
+| Evidence objects as first-class entities | Stage 1 has `lot_attributes`. Stage 2 needs `evidence_objects`. | Migration `20260327200000` has the table |
+| Attestation model | No explicit claim attribution in Stage 1. | `consignment_attestations` table exists |
+| Exception model | No blocking/warning exceptions in Stage 1. | `consignment_exceptions` table exists |
+| Buyer workflow | Stage 1 is producer-centric. | Stage 2 introduces importer/buyer roles |
+| Custody handoffs | Timeline events only. No sender/receiver model. | `consignment_handoffs` + actors table ready |
 
 ---
 
-## 🔐 Medidas de Seguridad Implementadas
+## 3. Residual Technical Debt
 
-### Autenticación
-- ✅ Validación de usuario autenticado
-- ✅ Validación de wallet conectada
-- ✅ Validación de productor existente
+### Must Fix (P1, before Stage 2 feature work)
 
-### Autorización
-- ✅ RLS policies en todas las tablas
-- ✅ Lectura pública, escritura restringida
-- ✅ Append-only en lot_events
+| Item | Impact | Action |
+|------|--------|--------|
+| No automated tests | Regression risk on any change | Write smoke tests for `create_lot_complete`, `get_lot_timeline`, `verificationService` |
+| No seed data | Cannot demo without manual setup | Create `supabase/seed.sql` with 3-5 example lots |
+| No structured logging | Blind debugging in production | Add logger util with structured JSON output |
+| Supabase auto-generated types include old `batches` table | Confusing for developers | Regenerate types after dropping `batches` table |
 
-### Validación de Datos
-- ✅ Validación de formato lot_id (XX-YYYY-NNN)
-- ✅ Validación de unicidad de lot_id
-- ✅ Validación de campos obligatorios
-- ✅ Validación de tipos de datos
+### Can Wait (P2)
 
-### Auditoría
-- ✅ Timestamps en todas las operaciones
-- ✅ Actor ID registrado en eventos
-- ✅ Metadata estructurada
-- ✅ Eventos inmutables (append-only)
-
-### Detección de Anomalías
-- ✅ Detección de escaneos sospechosos
-- ✅ Device fingerprinting
-- ✅ Geolocalización opcional
-- ✅ Trust score automático
+| Item | Impact | Action |
+|------|--------|--------|
+| Materialized views have no refresh strategy | Stale data in `lot_verification_counts`, `producer_statistics` | Add `pg_cron` refresh or manual trigger |
+| `lot.types.ts` has legacy field patterns | Minor TS confusion | Consolidate in P2.2 |
+| No rate limiting on `qr_verifications` INSERT | Potential spam | Add Edge Function or pg_net rate limiter |
 
 ---
 
-## 📊 Métricas Finales
+## 4. Formal Decisions
 
-| Métrica | Valor |
-|---------|-------|
-| Tablas creadas | 5 |
-| Funciones RPC | 3 |
-| Triggers | 8 |
-| Vistas materializadas | 2 |
-| Servicios | 4 |
-| Líneas de código (servicios) | 1,250+ |
-| Páginas refactorizadas | 4 |
-| Documentos creados | 8 |
-| Palabras de documentación | 25,000+ |
-| Tiempo de implementación | ~4 horas |
+### Decision 1: Single Source of Truth
+**Supabase PostgreSQL is the only source of truth for business data.**
 
----
+- No localStorage for business state
+- No frontend-computed business metrics
+- No mock data in core pages
+- All mutations go through RPC or direct Supabase client → DB
 
-## ✅ Criterios de Éxito Alcanzados
+### Decision 2: No Parallel Pages
+**There is one version of each page. No V2/legacy split.**
 
-### Funcionales
-- ✅ Creación de lote: 4 entidades en 1 transacción
-- ✅ Rollback: Si falla, sin datos huérfanos
-- ✅ Timeline: Desde eventos reales, no hardcoded
-- ✅ Verificaciones: En DB, no localStorage
-- ✅ Trust Score: Automático en verificaciones
+- Dashboard.tsx consumes dashboardService exclusively
+- Rastrear.tsx consumes lotService + trackingService exclusively
+- No page imports batchService or useScanTracking
 
-### No Funcionales
-- ✅ Mantenibilidad: Servicios < 400 líneas
-- ✅ Extensibilidad: Agregar atributos sin migrations
-- ✅ Performance: Índices estratégicos
-- ✅ Calidad: Sin localStorage, sin hardcoded
+### Decision 3: Legacy Is Quarantined
+**Legacy files exist in `/src/legacy/` for reference only.**
 
-### Seguridad
-- ✅ Autenticación validada
-- ✅ Autorización con RLS
-- ✅ Validación de entrada
-- ✅ Auditoría completa
+- `batchService.ts` — not imported by any runtime code
+- `useScanTracking.tsx` — not imported by any runtime code
+- `create_batch_tables.sql` — superseded by `20260327000000_create_core_schema_v2.sql`
+- These files may be deleted at any time without breaking the app
+
+### Decision 4: Append-Only Events
+**`lot_events` is append-only. No UPDATE or DELETE policies exist.**
+
+- Every state change produces an event
+- Timeline is reconstructed from events, never from mutable state
+- This is the foundation for Stage 2 `state_transitions` and `state_snapshots`
 
 ---
 
-## 🚀 Próximos Pasos (Stage 2)
+## 5. Documentation Index
 
-### Inmediatos (Sprint +1)
-1. Implementar tests automatizados
-2. Realizar security audit
-3. Optimizar performance
-4. Documentar API de servicios
-
-### Corto Plazo (Sprint +2)
-1. Integración blockchain real
-2. Trust score sofisticado
-3. Sistema de certificaciones
-4. Eliminar código legacy completamente
-
-### Mediano Plazo (Stage 2)
-1. Marketplace avanzado
-2. Custody tracking completo
-3. Integración con sistemas externos
-4. Escalabilidad horizontal
+| Document | Purpose |
+|----------|---------|
+| `STAGE1_CLOSEOUT.md` | This document — what's closed, what's out, decisions |
+| `STAGE1_LEGACY_REMOVAL.md` | Legacy cleanup details, verification commands |
+| `STAGE1_E2E_VALIDATION.md` | Reproducible E2E test flow with SQL queries |
+| `STAGE1_RLS_AUDIT.md` | RLS policy matrix, before/after, residual risks |
+| `stage_1_core_schema.md` | Full schema documentation |
+| `IMPLEMENTATION_SUMMARY_STAGE1.md` | Implementation narrative |
+| `migration_execution_guide.md` | How to run migrations |
 
 ---
 
-## 📞 Contacto y Soporte
+## 6. Stage 2 Entry Point
 
-### Documentación
-- Guía de implementación: `IMPLEMENTATION_SUMMARY_STAGE1.md`
-- Guía de validación: `STAGE1_E2E_VALIDATION.md`
-- Guía de schema: `stage_1_core_schema.md`
+Stage 2 is **not** "more blockchain." Stage 2 is:
 
-### Tickets Abiertos
-- STAGE1-CLEANUP-001: Eliminar batchService.ts
-- STAGE1-CLEANUP-002: Eliminar useScanTracking.tsx
-- STAGE1-TESTING-001: Implementar unit tests
-- STAGE1-TESTING-002: Implementar integration tests
+**Decision-state engine + evidence pack + buyer workflow**
 
-### Equipo
-- Arquitectura: Cascade AI
-- Implementación: Cascade AI
-- Testing: Manual (pendiente)
-- Deployment: Pendiente
+The system transitions from "lots with tracking" to "verifiable state for decisions."
 
----
+### Stage 2 P0 primitives (already scaffolded in migrations):
+1. **ConsignmentCase** — groups lots under operational unit
+2. **EvidenceObject** — first-class evidence entity with hash, type, source
+3. **Attestation** — attributed claim by a specific actor
+4. **Exception** — blocking/warning that makes decisions computable
+5. **StateSnapshot** — point-in-time record of consignment state
 
-## 🎉 Conclusión
-
-**Stage 1 ha sido completado exitosamente.**
-
-El sistema ha sido transformado de una arquitectura monolítica con datos hardcoded a un modelo normalizado, basado en eventos, con transacciones atómicas y medidas de seguridad robustas.
-
-**Supabase es ahora la única fuente de verdad.**  
-**El runtime legacy está congelado.**  
-**Las transacciones son atómicas vía RPC.**
-
-**Estado:** ✅ LISTO PARA TESTING Y VALIDACIÓN
+### Stage 2 entry criteria:
+- [ ] Stage 1 E2E validation passes (STAGE1_E2E_VALIDATION.md)
+- [ ] RLS migration applied (20260329000000_rls_audit_tighten.sql)
+- [ ] Seed data available for demos
+- [ ] At least smoke tests for core RPCs
 
 ---
 
-**Fecha de Cierre:** 27 de marzo, 2026  
-**Versión:** 1.0  
-**Aprobado por:** Cascade AI  
-**Siguiente Revisión:** Sprint +1
+**Close Date:** 2026-03-29
+**Version:** 2.0
+**Status:** CLOSED — Stage 2 may begin when entry criteria are met

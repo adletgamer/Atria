@@ -5,6 +5,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 import type {
   CreateLotPayload,
   CreateLotResult,
@@ -55,7 +56,7 @@ export const lotService = {
       });
 
       if (error) {
-        console.error("Error en create_lot_complete:", error);
+        logger.error("lot.create_failed", {}, error);
         return {
           success: false,
           error: error.message || "Error al crear el lote",
@@ -77,7 +78,7 @@ export const lotService = {
         },
       };
     } catch (error: any) {
-      console.error("Exception en createLot:", error);
+      logger.error("lot.create_exception", {}, error);
       return {
         success: false,
         error: error.message || "Error inesperado al crear el lote",
@@ -95,7 +96,7 @@ export const lotService = {
       });
 
       if (error) {
-        console.error("Error en get_lot_with_details:", error);
+        logger.error("lot.getByLotId_failed", {}, error);
         return {
           success: false,
           error: error.message,
@@ -114,7 +115,7 @@ export const lotService = {
         data: data[0],
       };
     } catch (error: any) {
-      console.error("Exception en getLotByLotId:", error);
+      logger.error("lot.getByLotId_exception", {}, error);
       return {
         success: false,
         error: error.message || "Error al obtener el lote",
@@ -148,7 +149,7 @@ export const lotService = {
         .range(offset, offset + limit - 1);
 
       if (error) {
-        console.error("Error en getAllLots:", error);
+        logger.error("lot.getAll_failed", {}, error);
         return {
           success: false,
           error: error.message,
@@ -193,7 +194,7 @@ export const lotService = {
         data: lots,
       };
     } catch (error: any) {
-      console.error("Exception en getAllLots:", error);
+      logger.error("lot.getAll_exception", {}, error);
       return {
         success: false,
         error: error.message || "Error al obtener lotes",
@@ -239,7 +240,7 @@ export const lotService = {
         );
 
       if (error) {
-        console.error("Error en updateLotAttribute:", error);
+        logger.error("lot.updateAttribute_failed", {}, error);
         return {
           success: false,
           error: error.message,
@@ -250,7 +251,7 @@ export const lotService = {
         success: true,
       };
     } catch (error: any) {
-      console.error("Exception en updateLotAttribute:", error);
+      logger.error("lot.updateAttribute_exception", {}, error);
       return {
         success: false,
         error: error.message || "Error al actualizar atributo",

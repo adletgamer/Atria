@@ -198,11 +198,15 @@ export interface ConsignmentCase {
   readiness: ReadinessState;
   current_state: CaseState;
   risk_status: string;
+  pack_status: PackStatus;
   total_pallets: number;
   total_kg: number;
   estimated_departure: string | null;
   shipment_window_start: string | null;
   shipment_window_end: string | null;
+  blocking_exception_count: number;
+  evidence_completeness_pct: number;
+  custody_gap_count: number;
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
@@ -441,8 +445,25 @@ export interface EvidenceObject {
   visibility: EvidenceVisibility;
   title: string | null;
   description: string | null;
+  expires_at: string | null;
+  freshness_window_days: number | null;
   metadata: Record<string, any>;
   created_at: string;
+}
+
+export function isEvidenceExpired(eo: EvidenceObject): boolean {
+  if (!eo.expires_at) return false;
+  return new Date(eo.expires_at) < new Date();
+}
+
+export function evidenceFreshness(eo: EvidenceObject): 'fresh' | 'expiring' | 'expired' | 'no_expiry' {
+  if (!eo.expires_at) return 'no_expiry';
+  const now = new Date();
+  const expires = new Date(eo.expires_at);
+  if (expires < now) return 'expired';
+  const daysLeft = (expires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+  const window = eo.freshness_window_days || 30;
+  return daysLeft <= window ? 'expiring' : 'fresh';
 }
 
 // ============================================
@@ -584,6 +605,44 @@ export const CUSTODY_SIGNING_LEVEL = {
 
 export type CustodySigningLevel = typeof CUSTODY_SIGNING_LEVEL[keyof typeof CUSTODY_SIGNING_LEVEL];
 
+// --- Pack Status (explicit evidence pack lifecycle) ---
+
+export const PACK_STATUS = {
+  NOT_GENERATED: 'not_generated',
+  STALE: 'stale',
+  FRESH: 'fresh',
+  ANCHORED: 'anchored',
+  SHARED: 'shared',
+} as const;
+
+export type PackStatus = typeof PACK_STATUS[keyof typeof PACK_STATUS];
+
+// --- Decision Context (the lens under which readiness is computed) ---
+
+export const DECISION_CONTEXT = {
+  IMPORT_READINESS: 'import_readiness',
+  FINANCING_READINESS: 'financing_readiness',
+} as const;
+
+export type DecisionContext = typeof DECISION_CONTEXT[keyof typeof DECISION_CONTEXT];
+
+// --- Readiness Reasons (structured justification per decision context) ---
+
+export interface ReadinessReason {
+  label: string;
+  satisfied: boolean;
+  detail?: string;
+}
+
+export interface ReadinessAssessment {
+  context: DecisionContext;
+  ready: boolean;
+  reasons_for: ReadinessReason[];
+  reasons_against: ReadinessReason[];
+  blocking_exceptions: ConsignmentException[];
+  missing_evidence: string[];
+}
+
 export const SNAPSHOT_TRIGGER = {
   STATE_TRANSITION: 'state_transition',
   EVIDENCE_PACK_REQUEST: 'evidence_pack_request',
@@ -643,6 +702,11 @@ export interface StateSnapshot {
   blocking_exceptions: number;
   evidence_completeness_pct: number;
   custody_gap_count: number;
+  attribution_strength: number;
+  custody_continuity_score: number;
+  decision_readiness_import: boolean;
+  decision_readiness_financing: boolean;
+  warning_exceptions: number;
   created_at: string;
 }
 

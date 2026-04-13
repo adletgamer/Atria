@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useMetaMask } from "@/hooks/useMetaMask";
-import { Link2, Wallet, LogOut, ShieldCheck, ArrowRight } from "lucide-react";
+import { Link2, Settings2, LogOut, ShieldCheck, ArrowRight, ChevronDown } from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -18,29 +19,29 @@ const fadeUp = {
 const txt = {
   es: {
     title: "Settings",
-    subtitle: "Configuración de cuenta e integraciones",
-    integrations: "Integrations",
-    walletTitle: "Wallet",
-    walletDesc: "Conecta tu wallet desde aquí cuando necesites firma on-chain.",
-    connect: "Conectar Wallet",
+    subtitle: "Configuración de cuenta",
+    account: "Cuenta",
+    consignments: "Ir a Consignaciones",
+    advancedTitle: "Avanzado: Anclaje On-Chain",
+    advancedDesc: "Configuración de firma on-chain. Solo para administradores.",
+    connect: "Conectar",
     disconnect: "Desconectar",
     connected: "Conectada",
     notConnected: "No conectada",
     network: "Red",
-    readiness: "Ir a Readiness",
   },
   en: {
     title: "Settings",
-    subtitle: "Account configuration and integrations",
-    integrations: "Integrations",
-    walletTitle: "Wallet",
-    walletDesc: "Connect your wallet here when you need on-chain signing.",
-    connect: "Connect Wallet",
+    subtitle: "Account configuration",
+    account: "Account",
+    consignments: "Go to Consignments",
+    advancedTitle: "Advanced: On-Chain Anchoring",
+    advancedDesc: "On-chain signing configuration. Administrators only.",
+    connect: "Connect",
     disconnect: "Disconnect",
     connected: "Connected",
     notConnected: "Not connected",
     network: "Network",
-    readiness: "Go to Readiness",
   },
 };
 
@@ -48,6 +49,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const i = txt[lang];
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const {
     account,
     isConnected,
@@ -68,26 +70,34 @@ const Settings = () => {
         <div className="max-w-4xl mx-auto">
           <motion.div initial="hidden" animate="visible" className="mb-8">
             <motion.div custom={0} variants={fadeUp}>
-              <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">{i.integrations}</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">{i.account}</p>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground font-display">{i.title}</h1>
               <p className="text-muted-foreground mt-1">{i.subtitle}</p>
             </motion.div>
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            custom={1}
-            variants={fadeUp}
-            className="bg-card rounded-2xl p-6 sm:p-8 shadow-card border border-border"
-          >
-            <div className="flex items-start justify-between gap-4 flex-col sm:flex-row">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Wallet className="h-5 w-5 text-primary" />
-                  <h2 className="text-xl font-bold text-card-foreground font-display">{i.walletTitle}</h2>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">{i.walletDesc}</p>
+          <motion.div initial="hidden" animate="visible" custom={1} variants={fadeUp} className="mb-6">
+            <Button variant="outline" className="rounded-xl" onClick={() => navigate("/consignments")}>
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              {i.consignments}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </motion.div>
+
+          {/* Advanced: On-Chain — collapsed by default */}
+          <motion.div initial="hidden" animate="visible" custom={2} variants={fadeUp}>
+            <button
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mb-3"
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+              <span className="font-medium">{i.advancedTitle}</span>
+              <ChevronDown className={`h-3 w-3 transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
+            </button>
+
+            {showAdvanced && (
+              <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-card border border-border">
+                <p className="text-xs text-muted-foreground mb-4">{i.advancedDesc}</p>
                 <div className="space-y-2 text-sm">
                   <p className="text-foreground">
                     <span className="font-semibold">Status:</span>{" "}
@@ -107,38 +117,33 @@ const Settings = () => {
                   )}
                   {error && <p className="text-destructive text-xs">{error}</p>}
                 </div>
-              </div>
 
-              <div className="flex gap-2 w-full sm:w-auto">
-                {!isConnected ? (
-                  <Button
-                    onClick={() => connectWallet()}
-                    disabled={isLoading}
-                    className="bg-gradient-mango text-primary-foreground rounded-xl w-full sm:w-auto"
-                  >
-                    <Link2 className="mr-2 h-4 w-4" />
-                    {isLoading ? "..." : i.connect}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    onClick={disconnectWallet}
-                    className="rounded-xl border-destructive/20 text-destructive w-full sm:w-auto"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {i.disconnect}
-                  </Button>
-                )}
+                <div className="flex gap-2 mt-4">
+                  {!isConnected ? (
+                    <Button
+                      onClick={() => connectWallet()}
+                      disabled={isLoading}
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl"
+                    >
+                      <Link2 className="mr-2 h-3.5 w-3.5" />
+                      {isLoading ? "..." : i.connect}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={disconnectWallet}
+                      className="rounded-xl border-destructive/20 text-destructive"
+                    >
+                      <LogOut className="mr-2 h-3.5 w-3.5" />
+                      {i.disconnect}
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          </motion.div>
-
-          <motion.div initial="hidden" animate="visible" custom={2} variants={fadeUp} className="mt-6">
-            <Button variant="outline" className="rounded-xl" onClick={() => navigate("/readiness") }>
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              {i.readiness}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            )}
           </motion.div>
         </div>
       </div>

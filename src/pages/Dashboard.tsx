@@ -6,11 +6,14 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import {
-  Package, TrendingUp, Users, MapPin, ArrowUpRight,
-  Shield, Calendar, Leaf, DollarSign, Award, Truck, BarChart3,
+  Package, TrendingUp, Users, MapPin, ArrowUpRight, DollarSign,
+  Shield, ShieldCheck, Calendar, Leaf, Award, Truck, BarChart3, Activity,
+  ExternalLink, Loader2,
 } from "lucide-react";
 import peruMap from "@/assets/peru-map.png";
 import { dashboardService } from "@/services/dashboardService";
+import type { AnchoringStats } from "@/services/dashboardService";
+import { getTopicHashScanUrl, isHederaConfigured } from "@/config/hedera";
 import { toast } from "sonner";
 
 const fadeUp = {
@@ -21,65 +24,65 @@ const fadeUp = {
 const txt = {
   es: {
     label: "Panel de Control",
-    title: "Dashboard",
-    subtitle: "Monitoreo en tiempo real de tu cadena de suministro",
-    batches: "Lotes Registrados",
-    batchesDesc: "Total en blockchain",
-    producers: "Productores Activos",
-    producersDesc: "Agricultores verificados",
-    orders: "Órdenes",
-    ordersDesc: "En el marketplace",
+    title: "Overview",
+    subtitle: "Vista operacional de consignaciones, evidencia y readiness",
+    batches: "Consignaciones",
+    batchesDesc: "Casos registrados",
+    producers: "Actores Activos",
+    producersDesc: "Participantes con actividad",
+    orders: "Verificaciones",
+    ordersDesc: "Eventos de verificación",
     regions: "Regiones",
     regionsDesc: "Zonas activas",
-    registerNew: "Registrar Lote",
-    marketplace: "Marketplace",
-    recentTitle: "Lotes Recientes",
-    recentDesc: "Últimos registros en la plataforma",
+    registerNew: "Nueva Consignación",
+    marketplace: "Readiness",
+    recentTitle: "Evidencia Reciente",
+    recentDesc: "Últimos registros auditables",
     mapTitle: "Mapa de Producción",
     mapDesc: "Principales regiones productoras de mango en Perú",
-    qualityTitle: "Distribución de Calidad",
-    qualityDesc: "Porcentaje de lotes por grado",
+    qualityTitle: "Distribución de Estado",
+    qualityDesc: "Porcentaje por estado operativo",
     networkTitle: "Estado de Red",
-    noBatches: "Sin lotes registrados",
-    noBatchesDesc: "Comienza registrando tu primer lote",
-    registerFirst: "Registrar Primer Lote",
+    noBatches: "Sin registros recientes",
+    noBatchesDesc: "Comienza cargando evidencia en consignaciones",
+    registerFirst: "Ir a Consignaciones",
     viewAll: "Ver Todos",
     highProd: "Alta Producción",
     medProd: "Media Producción",
     welcome: "Bienvenido",
-    totalKg: "Kg totales",
-    avgPrice: "Precio promedio",
+    totalKg: "Evidence Completeness",
+    avgPrice: "Custody Continuity",
   },
   en: {
     label: "Control Panel",
-    title: "Dashboard",
-    subtitle: "Real-time monitoring of your supply chain",
-    batches: "Registered Batches",
-    batchesDesc: "Total on blockchain",
-    producers: "Active Producers",
-    producersDesc: "Verified farmers",
-    orders: "Orders",
-    ordersDesc: "In the marketplace",
+    title: "Overview",
+    subtitle: "Operational view of consignments, evidence and readiness",
+    batches: "Consignments",
+    batchesDesc: "Registered cases",
+    producers: "Active Actors",
+    producersDesc: "Participants with activity",
+    orders: "Verifications",
+    ordersDesc: "Verification events",
     regions: "Regions",
     regionsDesc: "Active zones",
-    registerNew: "Register Batch",
-    marketplace: "Marketplace",
-    recentTitle: "Recent Batches",
-    recentDesc: "Latest platform registrations",
+    registerNew: "New Consignment",
+    marketplace: "Readiness",
+    recentTitle: "Recent Evidence",
+    recentDesc: "Latest auditable records",
     mapTitle: "Production Map",
     mapDesc: "Main mango producing regions in Peru",
-    qualityTitle: "Quality Distribution",
-    qualityDesc: "Batch percentage by quality grade",
+    qualityTitle: "State Distribution",
+    qualityDesc: "Percentage by operational state",
     networkTitle: "Network Status",
-    noBatches: "No batches registered",
-    noBatchesDesc: "Start by registering your first batch",
-    registerFirst: "Register First Batch",
+    noBatches: "No recent records",
+    noBatchesDesc: "Start by adding evidence to consignments",
+    registerFirst: "Go to Consignments",
     viewAll: "View All",
     highProd: "High Production",
     medProd: "Medium Production",
     welcome: "Welcome",
-    totalKg: "Total Kg",
-    avgPrice: "Avg. Price",
+    totalKg: "Evidence Completeness",
+    avgPrice: "Custody Continuity",
   },
 };
 
@@ -91,9 +94,10 @@ const Dashboard = () => {
   const i = txt[lang];
 
   const [batches, setBatches] = useState<any[]>([]);
-  const [stats, setStats] = useState({ totalBatches: 0, producers: 0, orders: 0, regions: 0, totalKg: 0, avgPrice: 0 });
+  const [stats, setStats] = useState({ totalBatches: 0, producers: 0, orders: 0, regions: 0, totalKg: 0, avgPrice: 0, evidenceCompleteness: 0, custodyContinuity: 0 });
   const [qualityDistribution, setQualityDistribution] = useState<any[]>([]);
   const [locationDistribution, setLocationDistribution] = useState<any[]>([]);
+  const [anchoringStats, setAnchoringStats] = useState<AnchoringStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -107,9 +111,11 @@ const Dashboard = () => {
             totalBatches: statsResult.data.total_lots || 0,
             producers: statsResult.data.total_producers || 0,
             orders: statsResult.data.total_verifications || 0,
-            regions: 4, // Regiones fijas en Perú
+            regions: 4,
             totalKg: statsResult.data.total_kg || 0,
             avgPrice: Math.round((statsResult.data.avg_price || 0) * 100) / 100,
+            evidenceCompleteness: statsResult.data.evidence_completeness || 0,
+            custodyContinuity: statsResult.data.custody_continuity || 0,
           });
         }
 
@@ -129,6 +135,12 @@ const Dashboard = () => {
         const locationResult = await dashboardService.getLocationDistribution();
         if (locationResult.success && locationResult.data) {
           setLocationDistribution(locationResult.data);
+        }
+
+        // PASO 5: Obtener stats de anclaje Hedera
+        const anchorResult = await dashboardService.getAnchoringStats();
+        if (anchorResult.success && anchorResult.data) {
+          setAnchoringStats(anchorResult.data);
         }
       } catch (error) {
         console.error("Error cargando dashboard:", error);
@@ -156,8 +168,8 @@ const Dashboard = () => {
   const statsData = [
     { title: i.batches, value: stats.totalBatches, desc: i.batchesDesc, icon: Package, gradient: "bg-gradient-mango" },
     { title: i.producers, value: stats.producers, desc: i.producersDesc, icon: Users, gradient: "bg-gradient-earth" },
-    { title: i.totalKg, value: `${(stats.totalKg / 1000).toFixed(1)}t`, desc: i.ordersDesc, icon: Truck, gradient: "bg-gradient-mango" },
-    { title: i.avgPrice, value: `$${stats.avgPrice}`, desc: "/kg", icon: DollarSign, gradient: "bg-gradient-earth" },
+    { title: i.totalKg, value: `${stats.evidenceCompleteness}%`, desc: "target ≥ 80%", icon: Shield, gradient: "bg-gradient-mango" },
+    { title: i.avgPrice, value: `${stats.custodyContinuity}%`, desc: "target ≥ 70%", icon: Activity, gradient: "bg-gradient-earth" },
   ];
 
   return (
@@ -182,10 +194,10 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => navigate("/registrar")} size="sm" className="bg-gradient-mango text-primary-foreground font-semibold rounded-xl shadow-sm hover:shadow-elevated hover:scale-[1.02] transition-all text-xs h-9">
+                <Button onClick={() => navigate("/consignments")} size="sm" className="bg-gradient-mango text-primary-foreground font-semibold rounded-xl shadow-sm hover:shadow-elevated hover:scale-[1.02] transition-all text-xs h-9">
                   <Package className="mr-1.5 h-3.5 w-3.5" />{i.registerNew}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate("/marketplace")} className="rounded-xl border-border font-semibold hover:bg-muted transition-all text-xs h-9">
+                <Button variant="outline" size="sm" onClick={() => navigate("/consignments")} className="rounded-xl border-border font-semibold hover:bg-muted transition-all text-xs h-9">
                   <DollarSign className="mr-1.5 h-3.5 w-3.5" />{i.marketplace}
                 </Button>
               </div>
@@ -225,7 +237,7 @@ const Dashboard = () => {
                       <p className="text-[11px] text-muted-foreground">{i.recentDesc}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => navigate("/rastrear")} className="text-primary font-semibold text-xs h-8">
+                  <Button variant="ghost" size="sm" onClick={() => navigate("/consignments")} className="text-primary font-semibold text-xs h-8">
                     {i.viewAll}<ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -235,15 +247,15 @@ const Dashboard = () => {
                     {batches.slice(0, 5).map((batch, idx) => {
                       const status = statusLabels[batch.status] || statusLabels.registered;
                       return (
-                        <motion.div key={batch.batch_id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
-                          onClick={() => navigate(`/rastrear?lote=${batch.batch_id}`)}
+                        <motion.div key={batch.lot_id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
+                          onClick={() => navigate(`/verify-pack?lote=${batch.lot_id}`)}
                           className="flex items-center justify-between p-3.5 rounded-xl border border-border hover:border-primary/30 hover:shadow-sm bg-background cursor-pointer transition-all group">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-gradient-mango rounded-lg flex items-center justify-center shadow-sm">
                               <Leaf className="h-4 w-4 text-primary-foreground" />
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{batch.batch_id}</p>
+                              <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{batch.lot_id}</p>
                               <p className="text-[11px] text-muted-foreground">{batch.producer_name} · {batch.location}</p>
                             </div>
                           </div>
@@ -267,7 +279,7 @@ const Dashboard = () => {
                     </div>
                     <p className="font-bold text-foreground text-sm mb-1">{i.noBatches}</p>
                     <p className="text-xs text-muted-foreground mb-4">{i.noBatchesDesc}</p>
-                    <Button onClick={() => navigate("/registrar")} size="sm" className="bg-gradient-mango text-primary-foreground font-semibold rounded-xl text-xs">
+                    <Button onClick={() => navigate("/consignments")} size="sm" className="bg-gradient-mango text-primary-foreground font-semibold rounded-xl text-xs">
                       {i.registerFirst}
                     </Button>
                   </div>
@@ -307,25 +319,7 @@ const Dashboard = () => {
                   ))}
                 </div>
 
-                {/* Network Info */}
-                <div className="mt-6 pt-5 border-t border-border">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Shield className="h-3.5 w-3.5 text-primary" />
-                    <h3 className="text-xs font-bold text-foreground">{i.networkTitle}</h3>
-                  </div>
-                  <div className="space-y-1.5">
-                    {[
-                      { label: "Network", value: "Polygon Amoy" },
-                      { label: "Chain ID", value: "80002" },
-                      { label: "Status", value: "🟢 Active" },
-                    ].map((row) => (
-                      <div key={row.label} className="flex justify-between items-center p-2 bg-muted rounded-lg">
-                        <span className="text-[11px] font-semibold text-muted-foreground">{row.label}</span>
-                        <span className="text-[11px] font-bold text-foreground font-mono">{row.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                {/* Anchoring status — backend-managed, no wallet UX */}
               </div>
             </motion.div>
           </div>
@@ -366,21 +360,104 @@ const Dashboard = () => {
                       );
                     })
                   ) : (
-                    // Fallback si no hay datos
-                    [
-                      { name: "Piura", pct: "68%", color: "bg-secondary/10 border-secondary/20 text-secondary" },
-                      { name: "Lambayeque", pct: "25%", color: "bg-accent/10 border-accent/20 text-accent-foreground" },
-                      { name: "Ica", pct: "4%", color: "bg-primary/10 border-primary/20 text-primary" },
-                      { name: "La Libertad", pct: "3%", color: "bg-muted border-border text-muted-foreground" },
-                    ].map((r) => (
-                      <div key={r.name} className={`p-3.5 rounded-xl border ${r.color}`}>
-                        <p className="font-bold text-xs">{r.name}</p>
-                        <p className="text-xl font-extrabold font-display">{r.pct}</p>
-                      </div>
-                    ))
+                    <div className="col-span-2 p-4 text-center text-xs text-muted-foreground">
+                      {isLoading ? "Cargando..." : "Sin datos de ubicación"}
+                    </div>
                   )}
                 </div>
               </div>
+            </div>
+          </motion.div>
+
+          {/* Hedera Network Health */}
+          <motion.div initial="hidden" animate="visible" custom={3} variants={fadeUp}>
+            <div className="bg-card rounded-2xl p-6 shadow-card border border-border">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <ShieldCheck className="h-4.5 w-4.5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-card-foreground font-display">{i.networkTitle}</h2>
+                    <p className="text-[11px] text-muted-foreground">
+                      {lang === "es" ? "Integridad criptográfica via Hedera Hashgraph" : "Cryptographic integrity via Hedera Hashgraph"}
+                    </p>
+                  </div>
+                </div>
+                {isHederaConfigured() && (
+                  <a
+                    href={getTopicHashScanUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-primary hover:underline flex items-center gap-1 font-medium"
+                  >
+                    HashScan
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+
+              {anchoringStats ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider mb-1">
+                      {lang === "es" ? "Anclados" : "Anchored"}
+                    </p>
+                    <p className="text-2xl font-extrabold text-emerald-700 font-display">{anchoringStats.anchored_count}</p>
+                    <p className="text-[10px] text-emerald-500 mt-0.5">
+                      {lang === "es" ? "packs inmutables" : "immutable packs"}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200">
+                    <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider mb-1">
+                      {lang === "es" ? "Verificados" : "Verified"}
+                    </p>
+                    <p className="text-2xl font-extrabold text-blue-700 font-display">{anchoringStats.verified_count}</p>
+                    <p className="text-[10px] text-blue-500 mt-0.5">
+                      {lang === "es" ? "via Mirror Node" : "via Mirror Node"}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+                    <p className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider mb-1">
+                      {lang === "es" ? "Pendientes" : "Pending"}
+                    </p>
+                    <p className="text-2xl font-extrabold text-amber-700 font-display">{anchoringStats.pending_count}</p>
+                    <p className="text-[10px] text-amber-500 mt-0.5">
+                      {lang === "es" ? "en cola" : "in queue"}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-muted border border-border">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                      {lang === "es" ? "Último anclaje" : "Last Anchor"}
+                    </p>
+                    <p className="text-sm font-bold text-foreground font-display">
+                      {anchoringStats.last_anchored_at
+                        ? new Date(anchoringStats.last_anchored_at).toLocaleDateString()
+                        : "—"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {anchoringStats.last_anchored_at
+                        ? new Date(anchoringStats.last_anchored_at).toLocaleTimeString()
+                        : lang === "es" ? "sin anclajes" : "no anchors yet"}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  {isLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" />
+                  ) : (
+                    <>
+                      <Shield className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                      <p className="text-xs text-muted-foreground">
+                        {isHederaConfigured()
+                          ? (lang === "es" ? "Sin anclajes registrados aún" : "No anchors registered yet")
+                          : (lang === "es" ? "Configurar Hedera para habilitar anclaje" : "Configure Hedera to enable anchoring")}
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
