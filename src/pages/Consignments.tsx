@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import {
   PackageOpen,
   Plus,
-  Loader2,
   MapPin,
   ShieldAlert,
   Calendar,
@@ -13,6 +12,8 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import { TableSkeleton } from "@/components/ui/PageSkeleton";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/utils/logger";
@@ -98,10 +99,7 @@ const Consignments = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {loading ? (
-          <div className="flex items-center justify-center py-32 space-x-3">
-            <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-            <span className="text-sm font-medium text-gray-500 tracking-wide">Syncing Blockchain Data...</span>
-          </div>
+          <TableSkeleton rows={6} />
         ) : cases.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center py-32 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
             <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-6 shadow-inner">

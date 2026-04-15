@@ -10,6 +10,7 @@ import { queryClient } from "@/config/queryClient";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import Index from "./pages/Index";
 import Rastrear from "./pages/Rastrear";
 import Dashboard from "./pages/Dashboard";
@@ -46,14 +47,14 @@ const App = () => (
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
 
-                  {/* Authenticated App */}
-                  <Route path="/overview" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/consignments" element={<ProtectedRoute><Consignments /></ProtectedRoute>} />
-                  <Route path="/consignments/:id" element={<ProtectedRoute><ConsignmentWorkbench /></ProtectedRoute>} />
-                  <Route path="/evidence" element={<ProtectedRoute><Evidence /></ProtectedRoute>} />
-                  <Route path="/readiness" element={<ProtectedRoute><Readiness /></ProtectedRoute>} />
-                  <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                  {/* Authenticated App — each route wrapped in ErrorBoundary */}
+                  <Route path="/overview" element={<ProtectedRoute><ErrorBoundary><Dashboard /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/consignments" element={<ProtectedRoute><ErrorBoundary><Consignments /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/consignments/:id" element={<ProtectedRoute><ErrorBoundary><ConsignmentWorkbench /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/evidence" element={<ProtectedRoute><ErrorBoundary><Evidence /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/readiness" element={<ProtectedRoute><ErrorBoundary><Readiness /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/analytics" element={<ProtectedRoute><ErrorBoundary><Analytics /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><ErrorBoundary><Settings /></ErrorBoundary></ProtectedRoute>} />
 
                   {/* Fallback */}
                   <Route path="*" element={<NotFound />} />

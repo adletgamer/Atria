@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BarChart3, TrendingUp, Shield, Clock, ArrowRight, Loader2 } from "lucide-react";
+import { BarChart3, TrendingUp, Shield, Clock, ArrowRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
+import { KpiGridSkeleton, GenericPageSkeleton } from "@/components/ui/PageSkeleton";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 12 },
@@ -159,8 +161,12 @@ const Analytics = () => {
 
           {/* KPIs */}
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <div className="space-y-6">
+              <KpiGridSkeleton cols={4} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="h-56 rounded-2xl bg-gray-100 animate-pulse" />
+                <div className="h-56 rounded-2xl bg-gray-100 animate-pulse" />
+              </div>
             </div>
           ) : (
             <>

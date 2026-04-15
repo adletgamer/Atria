@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import ConsignmentHeader from "@/components/consignment/ConsignmentHeader";
 import DecisionSentinel from "@/components/consignment/DecisionSentinel";
 import ReadinessChecklist from "@/components/consignment/ReadinessChecklist";
+import FinancingReadinessPanel from "@/components/consignment/FinancingReadinessPanel";
 import ExceptionsPanel from "@/components/consignment/ExceptionsPanel";
 import EvidenceCoverageMatrix from "@/components/consignment/EvidenceCoverageMatrix";
 import type { EvidenceRow } from "@/components/consignment/EvidenceCoverageMatrix";
@@ -360,16 +361,24 @@ const WorkbenchContent = ({ id }: { id: string }) => {
               onResolve={handleResolveException}
             />
 
-            <ReadinessChecklist
-              evidencePresent={completeness?.total_present || 0}
-              evidenceRequired={completeness?.total_required || 6}
-              missingCritical={missingCritical}
-              attestationsPresent={readiness?.attestations_present.length || 0}
-              attestationsRequired={(readiness?.attestations_present.length || 0) + (readiness?.attestations_missing.length || 6)}
-              custodyGaps={continuity?.custody_gaps || 0}
-              totalHandoffs={handoffs.length}
-              blockingExceptions={blockingCount}
-            />
+            {activeLens === "financing" ? (
+              <FinancingReadinessPanel
+                consignmentId={id}
+                caseNumber={caseData.case_number}
+                onExportPack={() => setDialogs((d) => ({ ...d, generatePack: true }))}
+              />
+            ) : (
+              <ReadinessChecklist
+                evidencePresent={completeness?.total_present || 0}
+                evidenceRequired={completeness?.total_required || 6}
+                missingCritical={missingCritical}
+                attestationsPresent={readiness?.attestations_present.length || 0}
+                attestationsRequired={(readiness?.attestations_present.length || 0) + (readiness?.attestations_missing.length || 6)}
+                custodyGaps={continuity?.custody_gaps || 0}
+                totalHandoffs={handoffs.length}
+                blockingExceptions={blockingCount}
+              />
+            )}
 
             <EvidenceCoverageMatrix evidence={allEvidenceRows} />
 

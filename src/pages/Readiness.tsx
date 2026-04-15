@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Activity, CheckCircle2, XCircle, Clock, AlertTriangle,
-  ArrowRight, Loader2, ChevronRight,
+  ArrowRight, ChevronRight,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
+import { TableSkeleton, KpiGridSkeleton } from "@/components/ui/PageSkeleton";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 12 },
@@ -106,6 +108,7 @@ const Readiness = () => {
           </motion.div>
 
           {/* Summary KPIs */}
+          {isLoading && <KpiGridSkeleton cols={4} />}
           {!isLoading && (
             <motion.div custom={1} variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
@@ -125,9 +128,7 @@ const Readiness = () => {
           {/* Cases list */}
           <motion.div custom={2} variants={fadeUp} className="rounded-2xl border border-border bg-card shadow-card overflow-hidden">
             {isLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
+              <TableSkeleton rows={5} />
             ) : cases.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center px-4">
                 <Activity className="h-10 w-10 text-muted-foreground/30 mb-3" />
