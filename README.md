@@ -22,7 +22,7 @@ Existing systems are fragmented: phytosanitary certificates live in one portal, 
 
 ## The Solution
 
-HarvestLink Protocol is a **consignment readiness engine**: it groups all evidence objects for a shipment into a single case, tracks formal state transitions through a verified pipeline, and generates a cryptographically verifiable **Evidence Pack** — a SHA-256 Merkle root of all compliance documents — anchored immutably on Hedera Consensus Service.
+ATRIA is a **consignment readiness engine**: it groups all evidence objects for a shipment into a single case, tracks formal state transitions through a verified pipeline, and generates a cryptographically verifiable **Evidence Pack** — a SHA-256 Merkle root of all compliance documents — anchored immutably on Hedera Consensus Service.
 
 Anyone — importer, customs official, trade financier, auditor — can independently verify a shipment's readiness by querying the Hedera Mirror Node with nothing but the pack hash.
 
@@ -204,5 +204,5 @@ docs/
 
 ---
 
-*HarvestLink Protocol — Built at TKS & Velocity*  
+*ATRIA — Built at TKS & Velocity*  
 *Google Factory X Moonshot Submission — 2026*
