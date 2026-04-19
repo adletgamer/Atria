@@ -1,10 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut, Globe, ChevronDown, BarChart3, Package, FileText, ShieldCheck, Activity, Settings, ArrowRight } from "lucide-react";
+import { Menu, X, LogOut, Globe, ChevronDown, BarChart3, Package, FileText, ShieldCheck, Activity, Settings, ArrowRight, Triangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/hooks/useAuth";
-import logo from "@/assets/logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,7 +59,7 @@ const Navbar = () => {
     { label: lang === "es" ? "Inicio" : "Home", action: () => handleAnchor("hero") },
     { label: lang === "es" ? "Producto" : "Product", action: () => handleAnchor("product") },
     { label: lang === "es" ? "Cómo funciona" : "How it works", action: () => handleAnchor("how-it-works") },
-    { label: lang === "es" ? "Verificar Pack" : "Verify Pack", path: "/verify-pack" },
+    { label: lang === "es" ? "Verificar" : "Verify", path: "/verify-pack" },
   ];
 
   const appNavItems = [
@@ -77,30 +76,30 @@ const Navbar = () => {
   };
 
   return (
-    <nav className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+    <nav className={`sticky top-0 z-50 w-full transition-all duration-500 ${
       scrolled
-        ? "bg-background/80 backdrop-blur-xl shadow-sm border-b border-border/40"
-        : "bg-background/60 backdrop-blur-md border-b border-transparent"
+        ? "bg-background/85 backdrop-blur-2xl shadow-sm border-b border-border/40"
+        : "bg-transparent backdrop-blur-md border-b border-transparent"
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex h-12 items-center justify-between">
+        <div className="flex h-14 items-center justify-between">
           {/* Left — Logo */}
-          <Link to={user ? "/overview" : "/"} className="flex items-center gap-2 shrink-0">
-            <div className="bg-gradient-mango w-7 h-7 rounded-lg flex items-center justify-center">
-              <img src={logo} alt="MangoChain" className="h-4.5 w-4.5" />
+          <Link to={user ? "/overview" : "/"} className="flex items-center gap-2.5 shrink-0 group">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/15 group-hover:border-primary/30 transition-all duration-300">
+              <Triangle className="h-4 w-4 text-primary" />
             </div>
-            <span className="text-sm font-bold text-foreground hidden sm:inline font-display">MangoChain</span>
+            <span className="text-sm font-bold text-foreground hidden sm:inline font-display tracking-tight">ATRIA</span>
           </Link>
 
           {/* Center — Navigation */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-0.5">
             {user ? (
               appNavItems.map((item) => (
                 <Link key={item.path} to={item.path}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg transition-all duration-200 ${
                     isActive(item.path)
-                      ? "text-foreground bg-muted"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      ? "text-foreground bg-muted/60"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                   }`}>
                   {item.icon && <item.icon className="h-3 w-3" />}
                   {item.label}
@@ -110,16 +109,16 @@ const Navbar = () => {
               publicNavItems.map((item) =>
                 item.path ? (
                   <Link key={item.label} to={item.path}
-                    className={`px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors ${
+                    className={`px-3 py-1.5 text-[12px] font-medium rounded-lg transition-all duration-200 ${
                       isActive(item.path)
-                        ? "text-foreground bg-muted"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        ? "text-foreground bg-muted/60"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                     }`}>
                     {item.label}
                   </Link>
                 ) : (
                   <button key={item.label} onClick={item.action}
-                    className="px-3 py-1.5 text-[12px] font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+                    className="px-3 py-1.5 text-[12px] font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all duration-200">
                     {item.label}
                   </button>
                 )
@@ -128,23 +127,23 @@ const Navbar = () => {
           </div>
 
           {/* Right — Lang + Auth + CTA */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <button onClick={toggle}
-              className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all duration-200"
               title={lang === "es" ? "Switch to English" : "Cambiar a Español"}>
               <Globe className="h-3 w-3" />{lang === "es" ? "EN" : "ES"}
             </button>
 
-            <div className="hidden lg:flex items-center gap-1.5">
+            <div className="hidden lg:flex items-center gap-2">
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="rounded-md gap-1.5 px-2 h-7 hover:bg-muted/80">
+                    <Button variant="ghost" size="sm" className="rounded-lg gap-1.5 px-2.5 h-8 hover:bg-muted/40">
                       {profile?.avatar_url ? (
                         <img src={profile.avatar_url} alt="" className="w-5 h-5 rounded-full" />
                       ) : (
-                        <div className="w-5 h-5 bg-gradient-mango rounded-full flex items-center justify-center">
-                          <span className="text-[9px] font-bold text-primary-foreground">
+                        <div className="w-5 h-5 bg-primary/15 border border-primary/25 rounded-full flex items-center justify-center">
+                          <span className="text-[9px] font-bold text-primary">
                             {(profile?.full_name || user.email || "U")[0].toUpperCase()}
                           </span>
                         </div>
@@ -153,10 +152,10 @@ const Navbar = () => {
                       <ChevronDown className="h-2.5 w-2.5 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-xl border-border shadow-lg p-1 w-48">
-                    <div className="px-2.5 py-1.5">
+                  <DropdownMenuContent align="end" className="rounded-xl border-border shadow-lg p-1.5 w-48">
+                    <div className="px-2.5 py-2">
                       <p className="text-xs font-semibold text-foreground truncate">{profile?.full_name || user.email}</p>
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
                         {profile?.role === "exportador" ? (lang === "es" ? "Exportador" : "Exporter") : (lang === "es" ? "Agricultor" : "Farmer")}
                       </p>
                     </div>
@@ -180,14 +179,14 @@ const Navbar = () => {
               ) : (
                 <>
                   <Link to="/login">
-                    <Button variant="ghost" size="sm" className="rounded-md text-[11px] font-medium h-7 px-2.5 text-muted-foreground hover:text-foreground">
+                    <Button variant="ghost" size="sm" className="rounded-lg text-[11px] font-medium h-8 px-3 text-muted-foreground hover:text-foreground hover:bg-muted/30">
                       {lang === "es" ? "Iniciar sesión" : "Log in"}
                     </Button>
                   </Link>
-                  <a href="mailto:pilot@mangochain.io?subject=Pilot%20Request">
-                    <Button size="sm" className="rounded-md text-[11px] font-medium h-7 px-3 bg-foreground text-background hover:bg-foreground/90">
+                  <a href="mailto:pilot@atria.protocol?subject=Pilot%20Request">
+                    <Button size="sm" className="rounded-lg text-[11px] font-semibold h-8 px-4 bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow-teal/30 transition-all duration-300 hover:shadow-glow-teal/50">
                       {lang === "es" ? "Solicitar piloto" : "Request pilot"}
-                      <ArrowRight className="ml-1 h-3 w-3" />
+                      <ArrowRight className="ml-1.5 h-3 w-3" />
                     </Button>
                   </a>
                 </>
@@ -195,7 +194,7 @@ const Navbar = () => {
             </div>
 
             {/* Mobile Toggle */}
-            <button className="lg:hidden p-1.5 rounded-md hover:bg-muted/50 transition-colors"
+            <button className="lg:hidden p-1.5 rounded-lg hover:bg-muted/30 transition-all duration-200"
               onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
               {isOpen ? <X className="h-4 w-4 text-foreground" /> : <Menu className="h-4 w-4 text-foreground" />}
             </button>
@@ -204,12 +203,12 @@ const Navbar = () => {
 
         {/* Mobile Nav */}
         {isOpen && (
-          <div className="lg:hidden py-3 space-y-0.5 border-t border-border/30 animate-in slide-in-from-top-2 duration-200">
+          <div className="lg:hidden py-4 space-y-1 border-t border-border/30 animate-in slide-in-from-top-2 duration-200">
             {user ? (
               appNavItems.map((item) => (
                 <Link key={item.path} to={item.path}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    isActive(item.path) ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    isActive(item.path) ? "bg-muted/60 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                   }`} onClick={() => setIsOpen(false)}>
                   {item.icon && <item.icon className="h-3.5 w-3.5" />}
                   {item.label}
@@ -219,40 +218,40 @@ const Navbar = () => {
               publicNavItems.map((item) =>
                 item.path ? (
                   <Link key={item.label} to={item.path}
-                    className={`block px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                      isActive(item.path) ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    className={`block px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      isActive(item.path) ? "bg-muted/60 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                     }`} onClick={() => setIsOpen(false)}>
                     {item.label}
                   </Link>
                 ) : (
                   <button key={item.label} onClick={() => { item.action?.(); setIsOpen(false); }}
-                    className="block w-full text-left px-3 py-2 text-sm font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+                    className="block w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all duration-200">
                     {item.label}
                   </button>
                 )
               )
             )}
-            <div className="pt-2 border-t border-border/30 mt-1 space-y-1.5 px-1">
+            <div className="pt-3 border-t border-border/30 mt-2 space-y-2 px-1">
               {user ? (
                 <>
                   <Link to="/settings" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full rounded-md text-xs h-8" variant="outline">
+                    <Button className="w-full rounded-lg text-xs h-9" variant="outline">
                       <Settings className="mr-1.5 h-3.5 w-3.5" />{lang === "es" ? "Ajustes" : "Settings"}
                     </Button>
                   </Link>
-                  <Button variant="outline" size="sm" onClick={() => { signOut(); setIsOpen(false); }} className="w-full text-destructive border-destructive/20 rounded-md text-xs h-8">
+                  <Button variant="outline" size="sm" onClick={() => { signOut(); setIsOpen(false); }} className="w-full text-destructive border-destructive/20 rounded-lg text-xs h-9">
                     <LogOut className="mr-1.5 h-3.5 w-3.5" />{lang === "es" ? "Cerrar sesión" : "Log out"}
                   </Button>
                 </>
               ) : (
                 <>
                   <Link to="/login" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full rounded-md text-xs h-8" variant="outline">
+                    <Button className="w-full rounded-lg text-xs h-9" variant="outline">
                       {lang === "es" ? "Iniciar sesión" : "Log in"}
                     </Button>
                   </Link>
-                  <a href="mailto:pilot@mangochain.io?subject=Pilot%20Request">
-                    <Button className="w-full rounded-md text-xs h-8 bg-foreground text-background hover:bg-foreground/90">
+                  <a href="mailto:pilot@atria.protocol?subject=Pilot%20Request">
+                    <Button className="w-full rounded-lg text-xs h-9 bg-primary text-primary-foreground hover:bg-primary/90">
                       {lang === "es" ? "Solicitar piloto" : "Request pilot"}
                     </Button>
                   </a>
