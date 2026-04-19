@@ -1,4 +1,4 @@
-# HarvestLink Protocol
+# ATRIA
 
 **Verifiable supply-chain compliance for perishable exports — from farm to customs, anchored on Hedera.**
 
