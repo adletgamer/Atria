@@ -148,6 +148,17 @@
     background: linear-gradient(135deg, hsl(42 96% 56%), hsl(25 95% 55%));
   }
 
+  .bg-gradient-mango {
+    background: linear-gradient(135deg, hsl(168 80% 42%), hsl(190 80% 55%));
+  }
+
+  .text-gradient-mango {
+    background: linear-gradient(135deg, hsl(168 80% 42%), hsl(190 80% 55%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   .bg-gradient-hero {
     background: radial-gradient(ellipse 80% 60% at 50% -20%, hsla(168, 80%, 42%, 0.12), transparent),
                 radial-gradient(ellipse 60% 50% at 80% 50%, hsla(222, 60%, 55%, 0.08), transparent),

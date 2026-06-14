@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import type { UserProfile, UserRole } from "@/types/auth.types";
+import { normalizeRole } from "@/types/auth.types";
 
 interface AuthContextType {
   user: User | null;
@@ -23,7 +24,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (currentUser: User) => {
+    const userId = currentUser.id;
     try {
       // Try to get role from user_roles table
       const { data: roleData, error: roleError } = await supabase
@@ -33,35 +35,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       // Get role from metadata as fallback
-      const metadataRole = user?.user_metadata?.role as UserRole | undefined;
-      const userRole = roleData?.role || metadataRole || 'export_manager';
+      const metadataRole = currentUser.user_metadata?.role;
+      const userRole = normalizeRole(roleData?.role || metadataRole);
 
       const userProfile: UserProfile = {
         id: userId,
-        email: user?.email || '',
-        full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0],
+        email: currentUser.email || '',
+        full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0],
         role: userRole,
         organization_id: roleData?.organization_id,
         organization_name: roleData?.organizations?.name,
-        created_at: user?.created_at || '',
-        updated_at: user?.updated_at || user?.created_at || '',
+        created_at: currentUser.created_at || '',
+        updated_at: currentUser.updated_at || currentUser.created_at || '',
       };
 
       setProfile(userProfile);
       setRole(userRole);
+      return userProfile;
     } catch (error) {
       console.error('Error fetching profile:', error);
       // Set default profile on error
       const defaultProfile: UserProfile = {
         id: userId,
-        email: user?.email || '',
-        full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0],
+        email: currentUser.email || '',
+        full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0],
         role: 'export_manager',
-        created_at: user?.created_at || '',
-        updated_at: user?.created_at || '',
+        created_at: currentUser.created_at || '',
+        updated_at: currentUser.created_at || '',
       };
       setProfile(defaultProfile);
       setRole('export_manager');
+      return defaultProfile;
     }
   };
 
@@ -85,31 +89,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    let active = true;
+
+    const handleUserSession = async (session: Session | null, event?: string) => {
+      const currentUser = session?.user ?? null;
+      if (!active) return;
+
       setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setTimeout(async () => {
-          if (event === "SIGNED_IN") {
-            await applyPendingSignupRole(session.user.id);
-          }
-          await fetchProfile(session.user.id);
-        }, 0);
+      setUser(currentUser);
+
+      if (currentUser) {
+        if (event === "SIGNED_IN") {
+          await applyPendingSignupRole(currentUser.id);
+        }
+        await fetchProfile(currentUser);
       } else {
         setProfile(null);
         setRole(null);
       }
-      setLoading(false);
+
+      if (active) {
+        setLoading(false);
+      }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      handleUserSession(session, event);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
-      setLoading(false);
+      if (active) {
+        handleUserSession(session);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {

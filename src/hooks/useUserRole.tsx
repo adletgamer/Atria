@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import type { UserRole, UserProfile, RolePermissions } from "@/types/auth.types";
-import { ROLE_PERMISSIONS } from "@/types/auth.types";
+import { ROLE_PERMISSIONS, normalizeRole } from "@/types/auth.types";
 
 interface UseUserRoleReturn {
   role: UserRole | null;
@@ -52,7 +52,7 @@ export const useUserRole = (): UseUserRoleReturn => {
       }
 
       // Try to get role from user metadata first (set during signup)
-      const metadataRole = user.user_metadata?.role as UserRole | undefined;
+      const metadataRole = user.user_metadata?.role;
 
       // Try to get from user_roles table (P1.4 implementation)
       const { data: roleData, error: roleError } = await supabase
@@ -66,7 +66,7 @@ export const useUserRole = (): UseUserRoleReturn => {
         logger.error('useUserRole.loadRole_failed', { user_id: user.id }, roleError);
       }
 
-      const userRole = roleData?.role || metadataRole || 'export_manager'; // Default to export_manager
+      const userRole = normalizeRole(roleData?.role || metadataRole); // Default to export_manager via normalizeRole
 
       const userProfile: UserProfile = {
         id: user.id,

@@ -135,7 +135,7 @@ const content = {
     archRule: "Nada sensible va on-chain. Solo SHA-256 hashes de evidence packs son publicados para integridad verificable.",
     archItems: {
       offchain: ["Supabase PostgreSQL + RLS", "Evidence objects & storage", "Attestations & custody records", "17-actor access control"],
-      onchain: ["Hedera HCS Topic 0.0.8535355", "SHA-256 Merkle root anchoring", "MangoChainRegistry.sol (Polygon)", "Public Mirror Node verification"],
+      onchain: ["Hedera HCS Topic 0.0.8535355", "SHA-256 Merkle root anchoring", "AtriaRegistry.sol (Polygon)", "Public Mirror Node verification"],
     },
     outputsLabel: "Salidas",
     outputsTitle: "Lo que produce ATRIA",
@@ -247,7 +247,7 @@ const content = {
     archRule: "Nothing sensitive goes on-chain. Only SHA-256 hashes of evidence packs are published for verifiable integrity.",
     archItems: {
       offchain: ["Supabase PostgreSQL + RLS", "Evidence objects & storage", "Attestations & custody records", "17-actor access control"],
-      onchain: ["Hedera HCS Topic 0.0.8535355", "SHA-256 Merkle root anchoring", "MangoChainRegistry.sol (Polygon)", "Public Mirror Node verification"],
+      onchain: ["Hedera HCS Topic 0.0.8535355", "SHA-256 Merkle root anchoring", "AtriaRegistry.sol (Polygon)", "Public Mirror Node verification"],
     },
     outputsLabel: "Outputs",
     outputsTitle: "What ATRIA produces",

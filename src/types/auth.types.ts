@@ -103,3 +103,12 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   external_reviewer: 'View shared evidence packs only',
   system_admin: 'Full system access and user management',
 };
+
+export const normalizeRole = (role: any): UserRole => {
+  if (role === 'agricultor' || role === 'farmer') return 'export_manager';
+  if (role === 'exportador' || role === 'exporter') return 'compliance_lead';
+  if (role === 'auditor') return 'auditor';
+  if (role === 'external_reviewer') return 'external_reviewer';
+  if (role === 'system_admin') return 'system_admin';
+  return 'export_manager';
+};
