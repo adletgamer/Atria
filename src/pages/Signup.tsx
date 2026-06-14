@@ -103,9 +103,9 @@ const Signup = () => {
         <motion.div custom={0} variants={fadeUp} className="text-center mb-10">
           <Link to="/" className="inline-flex items-center gap-2.5">
             <div className="bg-gradient-mango w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg">
-              <img src={logo} alt="MangoChain" className="h-8 w-8" />
+              <img src={logo} alt="ATRIA" className="h-8 w-8" />
             </div>
-            <span className="text-2xl font-extrabold text-gradient-mango font-display">MangoChain</span>
+            <span className="text-2xl font-extrabold text-gradient-mango font-display">ATRIA</span>
           </Link>
         </motion.div>
 

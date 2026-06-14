@@ -25,6 +25,7 @@ import ResetPassword from "./pages/ResetPassword";
 import AuthCallback from "./pages/AuthCallback";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import SupabaseTest from "./pages/SupabaseTest";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -46,6 +47,7 @@ const App = () => (
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
+                  <Route path="/test-supabase" element={<SupabaseTest />} />
 
                   {/* Authenticated App — each route wrapped in ErrorBoundary */}
                   <Route path="/overview" element={<ProtectedRoute><ErrorBoundary><Dashboard /></ErrorBoundary></ProtectedRoute>} />

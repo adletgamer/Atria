@@ -23,7 +23,7 @@ let wagmiConfig;
 
 try {
   wagmiConfig = getDefaultConfig({
-    appName: 'MangoChain - Supply Chain Tracking',
+    appName: 'ATRIA Protocol',
     projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'default-project-id',
     chains: [polygonAmoy],
     transports: {
@@ -35,7 +35,7 @@ try {
   console.warn('Error initializing Wagmi config, using fallback:', error);
   // Usar configuración fallback en caso de error
   wagmiConfig = getDefaultConfig({
-    appName: 'MangoChain - Supply Chain Tracking',
+    appName: 'ATRIA Protocol',
     projectId: 'default-project-id',
     chains: [polygonAmoy],
     transports: {

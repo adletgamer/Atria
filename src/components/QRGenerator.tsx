@@ -170,8 +170,8 @@ const QRGenerator = ({
         try {
             if (navigator.share) {
                 await navigator.share({
-                    title: `MangoChain - Batch ${batchId}`,
-                    text: `Verifica la autenticidad de este lote de mango`,
+                    title: `ATRIA - Batch ${batchId}`,
+                    text: `Verifica la autenticidad y evidencia de este lote`,
                     url: verificationUrl,
                 });
                 toast.success("✓ Compartido exitosamente");
