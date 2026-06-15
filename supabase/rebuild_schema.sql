@@ -8,33 +8,8 @@
 
 -- ============================================
 -- 0. LIMPIEZA PREVIA (Para re-ejecución limpia)
--- ============================================
-DROP TRIGGER IF EXISTS trg_update_pack_status_on_snapshot ON state_snapshots;
-DROP TRIGGER IF EXISTS trg_mark_pack_stale_on_evidence ON evidence_objects;
-DROP TRIGGER IF EXISTS trg_mark_pack_stale_on_exception ON consignment_exceptions;
-DROP TRIGGER IF EXISTS trg_update_pack_status_on_anchor ON anchors;
-DROP TRIGGER IF EXISTS prevent_duplicate_anchor ON trust_proofs;
-DROP TRIGGER IF EXISTS sync_anchor_status_trigger ON trust_proofs;
-DROP TRIGGER IF EXISTS trigger_snapshot_on_transition ON state_transitions;
-DROP TRIGGER IF EXISTS trigger_update_signing_level ON consignment_handoffs;
-DROP TRIGGER IF EXISTS trigger_handoff_ack ON consignment_handoffs;
-DROP TRIGGER IF EXISTS trigger_anchor_committed ON anchors;
-DROP TRIGGER IF EXISTS trigger_evidence_added ON evidence_objects;
-DROP TRIGGER IF EXISTS trigger_apply_state_transition ON state_transitions;
-DROP TRIGGER IF EXISTS trigger_exception_resolved ON consignment_exceptions;
-DROP TRIGGER IF EXISTS trigger_exception_raised ON consignment_exceptions;
-DROP TRIGGER IF EXISTS trigger_handoff_created ON consignment_handoffs;
-DROP TRIGGER IF EXISTS trigger_attestation_created ON consignment_attestations;
-DROP TRIGGER IF EXISTS trigger_document_verified ON consignment_documents;
-DROP TRIGGER IF EXISTS trigger_document_added ON consignment_documents;
-DROP TRIGGER IF EXISTS trigger_lot_added ON consignment_lots;
-DROP TRIGGER IF EXISTS trigger_cc_initial_event ON consignment_cases;
-DROP TRIGGER IF EXISTS trigger_create_initial_trust_state ON lots;
-DROP TRIGGER IF EXISTS trigger_create_initial_lot_event ON lots;
-DROP TRIGGER IF EXISTS trigger_update_trust_on_verification ON qr_verifications;
-DROP TRIGGER IF EXISTS update_organizations_updated_at ON organizations;
-DROP TRIGGER IF EXISTS update_user_roles_updated_at ON user_roles;
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
 
 DROP MATERIALIZED VIEW IF EXISTS lot_verification_counts CASCADE;
 DROP MATERIALIZED VIEW IF EXISTS producer_statistics CASCADE;
